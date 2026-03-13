@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Are The Odds</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ─── RESET & BASE ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #D4A731;
+    --gold-light: #E6B83A;
+    --bg: #080808;
+    --bg1: #111111;
+    --bg2: #181818;
+    --bg3: #222222;
+    --border: #252525;
+    --border2: #333333;
+    --text: #F0EDE6;
+    --text2: #999999;
+    --text3: #555555;
+    --red: #E85555;
+    --green: #4CAF50;
+  }
+  html { background: var(--bg); }
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── TYPOGRAPHY ─── */
+  .display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
+  .label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--text3); }
+  .muted { color: var(--text2); }
+
+  /* ─── LAYOUT ─── */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+  .container { max-width: 480px; margin: 0 auto; padding: 0 20px; width: 100%; }
+  .spacer { flex: 1; }
+
+  /* ─── HERO HEADER ─── */
+  .app-header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .app-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; }
+  .app-logo span { color: var(--gold); }
+  .header-user {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text2);
+  }
+  .avatar-sm {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #000;
+    flex-shrink: 0;
+  }
+
+  /* ─── HERO (landing) ─── */
+  .hero-screen {
+    background: var(--bg);
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(212,167,49,0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag { font-size: 11px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }
+  .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(64px,16vw,120px); line-height: 0.85; margin-bottom: 20px; }
+  .hero-title .gold { color: var(--gold); }
+  .hero-sub { font-size: 15px; color: var(--text2); margin-bottom: 48px; max-width: 300px; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .card-title { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+
+  /* ─── INPUTS ─── */
+  .field { margin-bottom: 14px; }
+  .field-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; display: block; }
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"], select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  input::placeholder { color: var(--text3); }
+  select { cursor: pointer; }
+  select option { background: var(--bg1); }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: block; width: 100%;
+    border: none; border-radius: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 2px;
+    padding: 16px; cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-gold { background: var(--gold); color: #000; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-dark { background: var(--bg2); color: var(--text); border: 1px solid var(--border2); }
+  .btn-dark:hover { background: var(--bg3); border-color: var(--border2); }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0; padding: 12px; }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-sm { font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0; padding: 10px 18px; width: auto; display: inline-block; }
+  .btn-danger { background: var(--red); color: #fff; }
+
+  /* ─── TABS ─── */
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab {
+    flex: 1; padding: 10px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13px; font-weight: 600;
+    color: var(--text2); cursor: pointer; text-align: center;
+    transition: all 0.15s;
+  }
+  .tab.active { background: var(--gold); color: #000; border-color: var(--gold); }
+
+  /* ─── DIVIDER ─── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .divider-text {
+    display: flex; align-items: center; gap: 12px; margin: 20px 0;
+    font-size: 12px; color: var(--text3);
+  }
+  .divider-text::before, .divider-text::after {
+    content: ''; flex: 1; border-top: 1px solid var(--border);
+  }
+
+  /* ─── BADGE / PILL ─── */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .badge-gold { background: rgba(212,167,49,0.15); color: var(--gold); }
+  .badge-red { background: rgba(232,85,85,0.15); color: var(--red); }
+  .badge-green { background: rgba(76,175,80,0.15); color: var(--green); }
+
+  /* ─── NOTIFICATION / TOAST ─── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--bg2); border: 1px solid var(--border2);
+    color: var(--text); font-size: 13px; font-weight: 500;
+    padding: 12px 20px; border-radius: 30px;
+    transition: transform 0.3s; z-index: 9999; white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.error { border-color: var(--red); color: var(--red); }
+
+  /* ─── LOADING ─── */
+  .loader {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── SCREENS ─── */
+
+  /* AUTH */
+  #screen-auth {
+    justify-content: center; align-items: stretch;
+    padding: 40px 20px;
+  }
+  .auth-wrap { max-width: 380px; margin: 0 auto; width: 100%; }
+  .auth-logo { text-align: center; margin-bottom: 40px; }
+  .auth-logo .display { font-size: 36px; }
+  .auth-logo .display span { color: var(--gold); }
+  .auth-logo p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* HOME */
+  #screen-home { flex-direction: column; }
+  .home-body { padding: 24px 20px; max-width: 480px; margin: 0 auto; width: 100%; flex: 1; }
+
+  .group-card {
+    background: var(--bg1); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: all 0.15s; margin-bottom: 10px;
+  }
+  .group-card:hover { border-color: var(--border2); background: var(--bg2); }
+  .group-card-left { display: flex; align-items: center; gap: 14px; }
+  .group-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .group-name { font-size: 15px; font-weight: 600; }
+  .group-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .group-arrow { color: var(--text3); font-size: 18px; }
+
+  /* GROUP DETAIL */
+  #screen-group { flex-direction: column; }
+  .group-header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .back-btn {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-size: 18px; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+  }
+  .back-btn:hover { border-color: var(--border2); }
+  .group-body { padding: 24px 20px; max-width: 480px; margin: 0 auto; width: 100%; }
+
+  /* LEADERBOARD */
+  .lb-row {
+    display: flex; align-items: center;
+    padding: 14px 16px; border-radius: 10px;
+    background: var(--bg1); border: 1px solid var(--border);
+    margin-bottom: 8px; gap: 14px;
+  }
+  .lb-rank { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--text3); width: 24px; text-align: center; }
+  .lb-rank.gold { color: var(--gold); }
+  .lb-rank.silver { color: #aaa; }
+  .lb-rank.bronze { color: #cd7f32; }
+  .lb-info { flex: 1; }
+  .lb-name { font-size: 14px; font-weight: 600; }
+  .lb-stats { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .lb-wins { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--gold); }
+
+  /* GAME SETUP */
+  #screen-play { flex-direction: column; }
+  .play-body { padding: 24px 20px; max-width: 480px; margin: 0 auto; width: 100%; flex: 1; }
+
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .mode-card {
+    background: var(--bg1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .mode-card:hover { border-color: var(--border2); }
+  .mode-card.active { border-color: var(--gold); background: rgba(212,167,49,0.06); }
+  .mode-icon { font-size: 28px; margin-bottom: 8px; }
+  .mode-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .mode-desc { font-size: 12px; color: var(--text2); line-height: 1.4; }
+
+  .odds-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .odds-btn {
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 6px; color: var(--text2);
+    font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 8px 16px; cursor: pointer; transition: all 0.15s;
+  }
+  .odds-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .odds-btn.active { background: var(--gold); border-color: var(--gold); color: #000; }
+
+  /* WAITING ROOM */
+  #screen-waiting { flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; }
+  .waiting-center { text-align: center; max-width: 360px; width: 100%; }
+  .waiting-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 8px; }
+  .waiting-sub { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
+
+  .number-entry {
+    background: var(--bg1); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; margin-bottom: 20px;
+  }
+  .big-number-input {
+    background: var(--bg) !important;
+    font-size: 48px !important; font-weight: 700 !important;
+    text-align: center; letter-spacing: 4px;
+    border-radius: 10px !important; padding: 20px !important;
+  }
+  .number-hint { font-size: 12px; color: var(--text3); margin-top: 10px; }
+
+  .player-status {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;
+  }
+  .status-left { display: flex; align-items: center; gap: 10px; }
+  .status-name { font-size: 14px; font-weight: 500; }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--text3);
+  }
+  .status-dot.ready { background: var(--green); }
+  .status-ready { font-size: 12px; color: var(--text3); }
+  .status-ready.done { color: var(--green); }
+
+  /* REVEAL SCREEN */
+  #screen-reveal { flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; }
+  .reveal-center { text-align: center; max-width: 420px; width: 100%; }
+
+  .reveal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+  .reveal-card {
+    background: var(--bg1); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; text-align: center;
+    transition: all 0.4s;
+  }
+  .reveal-card.match { border-color: var(--gold); background: rgba(212,167,49,0.08); }
+  .reveal-card-name { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+  .reveal-card-num { font-family: 'Bebas Neue', sans-serif; font-size: 56px; color: var(--gold); line-height: 1; }
+  .reveal-card-num.miss { color: var(--text3); }
+
+  .result-banner {
+    padding: 28px; border-radius: 14px; margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .result-banner.loss { border-color: var(--red); background: rgba(232,85,85,0.06); }
+  .result-banner.win { border-color: var(--green); background: rgba(76,175,80,0.06); }
+  .result-banner.safe { border-color: var(--border2); }
+
+  .result-emoji { font-size: 52px; margin-bottom: 12px; }
+  .result-headline { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 2px; margin-bottom: 8px; }
+  .result-opdracht-box {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin: 16px 0;
+    font-size: 15px; font-weight: 500; line-height: 1.5;
+  }
+
+  /* MEMBERS */
+  .member-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .member-row:last-child { border-bottom: none; }
+  .member-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .member-role { font-size: 11px; color: var(--text3); letter-spacing: 1px; }
+
+  /* INVITE BANNER */
+  .invite-banner {
+    background: var(--bg1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .invite-code {
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+    letter-spacing: 4px; color: var(--gold); flex: 1;
+  }
+  .copy-btn {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 6px; color: var(--text2);
+    font-size: 12px; font-weight: 600; padding: 6px 12px;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .copy-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* AVATAR COLORS */
+  .av-red { background: #E85555; }
+  .av-orange { background: #E87829; }
+  .av-yellow { background: #D4A731; }
+  .av-green { background: #4CAF50; }
+  .av-teal { background: #26A69A; }
+  .av-blue { background: #1E88E5; }
+  .av-purple { background: #7B1FA2; }
+  .av-pink { background: #E91E63; }
+
+  /* MISC */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mt8 { margin-top: 8px; }
+  .mt16 { margin-top: 16px; }
+  .mt24 { margin-top: 24px; }
+  .mb8 { margin-bottom: 8px; }
+  .mb16 { margin-bottom: 16px; }
+  .mb24 { margin-bottom: 24px; }
+  .text-center { text-align: center; }
+  .pulse { animation: pulse 1.5s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+  /* LANG SWITCHER */
+  .lang-switcher {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .lang-btn {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text3);
+    font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 700;
+    padding: 5px 8px; cursor: pointer; transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .lang-btn:hover { border-color: var(--border2); color: var(--text2); }
+  .lang-btn.active { background: var(--gold); border-color: var(--gold); color: #000; }
+
+  /* SUPABASE CONFIG MODAL */
+  #config-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 1000;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #config-modal.open { display: flex; }
+  .config-box {
+    background: var(--bg1); border: 1px solid var(--border2);
+    border-radius: 16px; padding: 28px; max-width: 440px; width: 100%;
+  }
+  .config-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; margin-bottom: 6px; }
+  .config-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+  .config-step {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+    font-size: 13px; color: var(--text2); line-height: 1.6;
+  }
+  .config-step strong { color: var(--text); font-weight: 600; }
+  .config-step code {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 1px 6px; font-size: 12px;
+    color: var(--gold); font-family: monospace;
+  }
+
+
+  /* ─── VERDICT SCREEN ─── */
+  .verdict-btn {
+    flex: 1; border: none; border-radius: 14px;
+    padding: 28px 20px; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .verdict-btn:active { transform: scale(0.97); }
+  .verdict-btn.yes { background: rgba(76,175,80,0.12); border: 2px solid #4CAF50; }
+  .verdict-btn.yes:hover { background: rgba(76,175,80,0.22); }
+  .verdict-btn.no  { background: rgba(232,85,85,0.12);  border: 2px solid #E85555; }
+  .verdict-btn.no:hover  { background: rgba(232,85,85,0.22); }
+  .verdict-icon { font-size: 0; line-height: 0; }
+  .verdict-label { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; }
+  .verdict-btn.yes .verdict-label { color: #4CAF50; }
+  .verdict-btn.no  .verdict-label { color: #E85555; }
+
+  /* ─── INVITE SHARE BUTTONS ─── */
+  .invite-share-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 16px; border-radius: 10px; cursor: pointer;
+    font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.5px; transition: all 0.15s; border: 1.5px solid;
+  }
+  .invite-share-btn:active { transform: scale(0.97); }
+  .invite-share-btn.whatsapp {
+    background: rgba(37,211,102,0.08); border-color: rgba(37,211,102,0.4); color: #25D366;
+  }
+  .invite-share-btn.whatsapp:hover { background: rgba(37,211,102,0.16); border-color: #25D366; }
+  .invite-share-btn.email {
+    background: rgba(212,167,49,0.08); border-color: rgba(212,167,49,0.4); color: var(--gold);
+  }
+  .invite-share-btn.email:hover { background: rgba(212,167,49,0.16); border-color: var(--gold); }
+
+
+  /* ─── SHARE BUTTONS ─── */
+  .share-row { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
+  .share-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: none; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: transform 0.15s, opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .share-btn:hover { transform: scale(1.1); }
+  .share-btn:active { transform: scale(0.95); }
+  .share-btn-wa { background: #25D366; }
+  .share-btn-mail { background: var(--bg2); border: 1px solid var(--border2); }
+
+  /* ─── LANGUAGE SWITCHER ─── */
+  .lang-switcher { display: flex; gap: 4px; align-items: center; }
+  .lang-btn {
+    background: transparent; border: 1px solid var(--border2);
+    border-radius: 6px; color: var(--text2);
+    font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px; padding: 5px 10px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center;
+  }
+  .lang-btn:hover { color: var(--text2); border-color: var(--border2); }
+  .lang-btn.active { background: var(--gold); border-color: var(--gold); color: #000; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SUPABASE CONFIG MODAL
+═══════════════════════════════════════════════ -->
+<div id="config-modal" class="open">
+  <div class="config-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div class="config-title" id="cfg-title">⚡ Supabase Koppelen</div>
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="nl" onclick="setLanguage('nl')"><span style="display:flex;align-items:center;gap:5px;"><svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;display:block;"><rect width="20" height="4.67" y="0" fill="#AE1C28"/><rect width="20" height="4.67" y="4.67" fill="#fff"/><rect width="20" height="4.67" y="9.33" fill="#21468B"/></svg> NL</span></button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')"><span style="display:flex;align-items:center;gap:5px;"><svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;display:block;"><rect width="20" height="14" fill="#012169"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#fff" stroke-width="2.8"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#C8102E" stroke-width="1.8"/><path d="M10,0 L10,14 M0,7 L20,7" stroke="#fff" stroke-width="4.6"/><path d="M10,0 L10,14 M0,7 L20,7" stroke="#C8102E" stroke-width="2.8"/></svg> EN</span></button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')"><span style="display:flex;align-items:center;gap:5px;"><svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;display:block;"><rect width="20" height="14" fill="#c60b1e"/><rect width="20" height="7" y="3.5" fill="#ffc400"/></svg> ES</span></button>
+      </div>
+    </div>
+    <div class="config-sub" id="cfg-sub">Vul je Supabase project gegevens in om de app te activeren. Heb je nog geen project? Maak er gratis één aan op supabase.com</div>
+
+    <div class="config-step" id="cfg-step1">
+      <strong>1.</strong> Ga naar <strong>supabase.com</strong> → New Project
+    </div>
+    <div class="config-step" id="cfg-step2">
+      <strong>2.</strong> Kopieer je <code>Project URL</code> en <code>anon key</code> uit Settings → API
+    </div>
+    <div class="config-step" id="cfg-step3">
+      <strong>3.</strong> Voer in het SQL editor het schema in (zie README.sql die meegeleverd is)
+    </div>
+
+    <div class="field mt16">
+      <label class="field-label" id="cfg-url-label">Supabase Project URL</label>
+      <input type="text" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+    </div>
+    <div class="field">
+      <label class="field-label" id="cfg-key-label">Supabase Anon Key</label>
+      <input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+    </div>
+
+    <button class="btn btn-gold mt8" id="cfg-connect-btn" onclick="initSupabase()">VERBINDEN</button>
+    <button class="btn btn-dark mt8" id="cfg-demo-btn" onclick="demoMode()">DEMO MODUS (zonder database)</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TOAST
+═══════════════════════════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: AUTH
+═══════════════════════════════════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="display" style="font-size:42px;">WHAT ARE<br><span>THE ODDS</span></div>
+      <p id="auth-tagline">Het ultieme vriendenspel</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="auth-tab-login" onclick="switchAuthTab('login')">INLOGGEN</div>
+      <div class="tab" id="auth-tab-signup" onclick="switchAuthTab('signup')">REGISTREREN</div>
+    </div>
+
+    <div id="auth-login">
+      <div class="field">
+        <label class="field-label" id="auth-email-label">E-mailadres</label>
+        <input type="email" id="login-email" placeholder="jij@example.com">
+      </div>
+      <div class="field">
+        <label class="field-label" id="auth-pass-label">Wachtwoord</label>
+        <input type="password" id="login-pass" placeholder="••••••••">
+      </div>
+      <button class="btn btn-gold" id="auth-login-btn" onclick="doLogin()">INLOGGEN</button>
+    </div>
+
+    <div id="auth-signup" style="display:none;">
+      <div class="field">
+        <label class="field-label" id="signup-username-label">Gebruikersnaam</label>
+        <input type="text" id="signup-username" placeholder="Bijv. TimDeBoer" maxlength="20">
+      </div>
+      <div class="field">
+        <label class="field-label" id="signup-email-label">E-mailadres</label>
+        <input type="email" id="signup-email" placeholder="jij@example.com">
+      </div>
+      <div class="field">
+        <label class="field-label" id="signup-pass-label">Wachtwoord</label>
+        <input type="password" id="signup-pass" placeholder="Min. 6 tekens">
+      </div>
+      <div class="field">
+        <label class="field-label" id="signup-color-label">Avatar kleur</label>
+        <select id="signup-color">
+          <option value="av-red">🔴 Rood</option>
+          <option value="av-orange">🟠 Oranje</option>
+          <option value="av-yellow" selected>🟡 Goud</option>
+          <option value="av-green">🟢 Groen</option>
+          <option value="av-teal">🩵 Teal</option>
+          <option value="av-blue">🔵 Blauw</option>
+          <option value="av-purple">🟣 Paars</option>
+          <option value="av-pink">🩷 Roze</option>
+        </select>
+      </div>
+      <button class="btn btn-gold" id="signup-btn" onclick="doSignup()">ACCOUNT AANMAKEN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: HOME
+═══════════════════════════════════════════════ -->
+<div id="screen-home" class="screen">
+  <div class="app-header">
+    <div class="app-logo">WATO <span>⚡</span></div>
+    <div class="header-user">
+      <div class="lang-switcher">
+        <button class="lang-btn" data-lang="nl" onclick="setLanguage('nl')"><span style="display:flex;align-items:center;gap:5px;"><svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;display:block;"><rect width="20" height="4.67" y="0" fill="#AE1C28"/><rect width="20" height="4.67" y="4.67" fill="#fff"/><rect width="20" height="4.67" y="9.33" fill="#21468B"/></svg> NL</span></button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')"><span style="display:flex;align-items:center;gap:5px;"><svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;display:block;"><rect width="20" height="14" fill="#012169"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#fff" stroke-width="2.8"/><path d="M0,0 L20,14 M20,0 L0,14" stroke="#C8102E" stroke-width="1.8"/><path d="M10,0 L10,14 M0,7 L20,7" stroke="#fff" stroke-width="4.6"/><path d="M10,0 L10,14 M0,7 L20,7" stroke="#C8102E" stroke-width="2.8"/></svg> EN</span></button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')"><span style="display:flex;align-items:center;gap:5px;"><svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;display:block;"><rect width="20" height="14" fill="#c60b1e"/><rect width="20" height="7" y="3.5" fill="#ffc400"/></svg> ES</span></button>
+      </div>
+      <span id="hdr-username"></span>
+      <div class="avatar-sm" id="hdr-avatar"></div>
+      <button class="btn-outline btn-sm" id="hdr-logout" onclick="doLogout()">Uitloggen</button>
+    </div>
+  </div>
+
+  <div class="home-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div class="label mb8" id="home-groups-label">Mijn Groepen</div>
+        <div style="font-size:22px;font-weight:700;" id="home-greeting">Hey!</div>
+      </div>
+    </div>
+
+    <div id="groups-list">
+      <div class="empty-state">
+        <div class="loader"></div>
+        <div style="margin-top:16px;font-size:13px;color:var(--text3);" id="home-loading">Laden...</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="card">
+      <div class="card-title" id="home-create-title">🏆 Maak een nieuwe groep</div>
+      <div class="field">
+        <label class="field-label" id="home-group-name-label">Groepsnaam</label>
+        <input type="text" id="new-group-name" placeholder="Bijv. De Bende, Kroegvrienden..." maxlength="30">
+      </div>
+      <button class="btn btn-gold" id="home-create-btn" onclick="createGroup()">GROEP AANMAKEN</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="home-join-title">🔗 Aansluiten bij groep</div>
+      <div class="field">
+        <label class="field-label" id="home-invite-label">Uitnodigingscode</label>
+        <input type="text" id="join-code" placeholder="Bijv. ABC123" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;font-size:20px;font-weight:700;text-align:center;">
+      </div>
+      <button class="btn btn-outline" id="home-join-btn" onclick="joinGroup()">AANSLUITEN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: GROUP DETAIL
+═══════════════════════════════════════════════ -->
+<div id="screen-group" class="screen">
+  <div class="group-header">
+    <div class="back-btn" onclick="showScreen('home')">←</div>
+    <div>
+      <div style="font-size:18px;font-weight:700;" id="grp-title">Groep</div>
+      <div style="font-size:12px;color:var(--text2);" id="grp-meta"></div>
+    </div>
+  </div>
+
+  <div class="group-body">
+
+    <!-- Invite code -->
+    <div class="label mb8" id="grp-invite-label">Uitnodigingscode</div>
+    <div class="invite-banner mb24">
+      <div class="invite-code" id="grp-invite-code">——</div>
+      <button class="copy-btn" id="grp-copy-btn" onclick="copyInviteCode()">KOPIËREN</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" id="grp-tab-lb-btn" onclick="switchGroupTab('leaderboard')">🏆 STAND</div>
+      <div class="tab" id="grp-tab-play-btn" onclick="switchGroupTab('play')">🎮 SPELEN</div>
+      <div class="tab" id="grp-tab-mem-btn" onclick="switchGroupTab('members')">👥 LEDEN</div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="grp-tab-leaderboard">
+      <div class="label mb8" id="grp-ranking-label">Ranglijst</div>
+      <div id="leaderboard-list">
+        <div class="empty-state"><div class="loader"></div></div>
+      </div>
+    </div>
+
+    <!-- PLAY TAB -->
+    <div id="grp-tab-play" style="display:none;">
+      <div class="label mb8" id="grp-new-challenge-label">Nieuwe uitdaging</div>
+
+      <div class="card">
+        <div class="card-title" id="grp-opponent-title" style="margin-bottom:10px;">Uitgedaagde</div>
+        <select id="play-opponent" style="margin-bottom:0;">
+          <option value="">Kies een tegenstander...</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="card-title" id="grp-mode-title">Invoermodus</div>
+        <div class="mode-grid">
+          <div class="mode-card active" id="mode-manual" onclick="selectMode('manual')">
+            <div class="mode-icon">🤫</div>
+            <div class="mode-name" id="mode-manual-name">Zelf kiezen</div>
+            <div class="mode-desc" id="mode-manual-desc">Anoniem je eigen getal invoeren</div>
+          </div>
+          <div class="mode-card" id="mode-random" onclick="selectMode('random')">
+            <div class="mode-icon">🎲</div>
+            <div class="mode-name" id="mode-random-name">Willekeurig</div>
+            <div class="mode-desc" id="mode-random-desc">De app bepaalt beide getallen</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" id="grp-challenge-title">Opdracht</div>
+        <div style="display:flex;gap:10px;">
+          <input type="text" id="play-opdracht" placeholder="Bijv. drink je biertje in één keer op" style="flex:1;">
+          <button class="btn btn-dark btn-sm" onclick="suggestOpdracht()" style="white-space:nowrap;">🎲</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" id="grp-odds-title">Odds (1 op ...)</div>
+        <div class="odds-btns" id="play-odds-btns">
+          <button class="odds-btn" onclick="selectOdds(2,this)">2</button>
+          <button class="odds-btn active" onclick="selectOdds(5,this)">5</button>
+          <button class="odds-btn" onclick="selectOdds(10,this)">10</button>
+          <button class="odds-btn" onclick="selectOdds(20,this)">20</button>
+          <button class="odds-btn" onclick="selectOdds(50,this)">50</button>
+        </div>
+      </div>
+
+      <button class="btn btn-gold" id="grp-start-btn" onclick="startChallenge()">START UITDAGING 🔥</button>
+    </div>
+
+    <!-- MEMBERS TAB -->
+    <div id="grp-tab-members" style="display:none;">
+      <div class="label mb8" id="grp-members-label">Leden (<span id="member-count">0</span>)</div>
+      <div class="card mb16" id="members-list" style="padding:8px 16px;"></div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: WAITING (number entry)
+═══════════════════════════════════════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="waiting-center">
+    <div class="waiting-title" id="wait-title">WATO</div>
+    <div class="waiting-sub" id="wait-sub">Voer je getal in</div>
+
+    <div class="card mb16" style="text-align:left;padding:14px 16px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;" id="wait-challenge-label">De uitdaging</div>
+      <div style="font-size:16px;font-weight:600;" id="wait-opdracht"></div>
+      <div style="font-size:13px;color:var(--text2);margin-top:6px;"><span id="wait-odds-label">Odds: 1 op</span> <span id="wait-odds"></span></div>
+    </div>
+
+    <div id="wait-manual-section">
+      <div class="number-entry">
+        <div class="label mb8 text-center"><span id="wait-choose-label">Kies jouw getal (1 t/m</span> <span id="wait-max"></span>)</div>
+        <input type="number" id="wait-number" class="big-number-input" min="1" placeholder="?">
+        <div class="number-hint text-center" id="wait-number-hint">Niemand kan jouw getal zien totdat beide spelers klaar zijn</div>
+      </div>
+      <button class="btn btn-gold mb24" id="wait-lock-btn" onclick="submitNumber()">GETAL VERGRENDELEN 🔒</button>
+    </div>
+
+    <div id="wait-random-section" style="display:none;">
+      <div class="card text-center mb16">
+        <div style="font-size:36px;margin-bottom:8px;">🎲</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px;" id="wait-random-title">Willekeurige modus</div>
+        <div style="font-size:13px;color:var(--text2);" id="wait-random-desc">De app kiest voor jullie allebei een getal</div>
+      </div>
+      <button class="btn btn-gold mb24" id="wait-random-btn" onclick="submitRandom()">GETALLEN BEPALEN 🎲</button>
+    </div>
+
+    <div class="label mb8" id="wait-waiting-label">Wachten op...</div>
+    <div id="wait-status-list"></div>
+
+    <button class="btn btn-outline mt16" id="wait-back-btn" onclick="showScreen('group')">← Terug</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: REVEAL
+═══════════════════════════════════════════════ -->
+<div id="screen-reveal" class="screen">
+  <div class="reveal-center">
+    <div class="label mb8" id="reveal-result-label">De uitslag</div>
+
+    <div class="result-banner" id="reveal-banner">
+      <div class="result-emoji" id="reveal-emoji">🎲</div>
+      <div class="result-headline" id="reveal-headline">—</div>
+      <div style="font-size:14px;color:var(--text2);" id="reveal-sub"></div>
+    </div>
+
+    <div class="reveal-grid">
+      <div class="reveal-card" id="rcard-1">
+        <div class="reveal-card-name" id="rname-1"></div>
+        <div class="reveal-card-num" id="rnum-1">—</div>
+      </div>
+      <div class="reveal-card" id="rcard-2">
+        <div class="reveal-card-name" id="rname-2"></div>
+        <div class="reveal-card-num" id="rnum-2">—</div>
+      </div>
+    </div>
+
+    <div id="reveal-opdracht-wrap" style="display:none;">
+      <div class="label mb8" id="reveal-assignment-label">De opdracht</div>
+      <div class="result-opdracht-box" id="reveal-opdracht"></div>
+    </div>
+
+    <div class="two-col mt24">
+      <button class="btn btn-outline" id="reveal-back-btn" onclick="showScreen('group')">← TERUG</button>
+      <button class="btn btn-gold" id="reveal-again-btn" onclick="playAgain()">NIEUWE RONDE</button>
+    </div>
+    <div class="share-row">
+      <button class="share-btn share-btn-wa" onclick="shareWhatsApp()" title="Deel via WhatsApp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.979-1.405A9.953 9.953 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="#25D366"/><path d="M12 3.5C6.925 3.5 2.5 7.925 2.5 13a9.46 9.46 0 001.37 4.921L2.5 21.5l3.72-1.348A9.46 9.46 0 0012 21.5c5.075 0 9.5-4.425 9.5-9.5S17.075 3.5 12 3.5z" fill="white" fill-opacity="0.15"/><path d="M8.593 7.3c-.185 0-.388.007-.573.43l-.003.007c-.196.455-.749 1.851.588 3.98C9.943 13.845 11.77 15.5 14.2 16.4c.876.33 1.555.526 2.077.673.876.247 1.674.212 2.306.129.703-.093 2.166-.885 2.472-1.74.305-.854.305-1.586.213-1.74-.09-.154-.337-.245-.704-.428-.367-.184-2.167-1.07-2.503-1.193-.336-.122-.58-.184-.824.184-.245.368-.948 1.193-1.162 1.438-.213.245-.428.276-.795.092-.367-.184-1.55-.572-2.953-1.822-1.09-.974-1.827-2.175-2.04-2.543-.214-.368-.023-.567.16-.75.164-.163.367-.428.55-.643.185-.214.245-.368.368-.612.123-.245.062-.46-.031-.643-.092-.184-.824-1.988-1.13-2.726-.298-.72-.602-.623-.824-.634l-.703-.012z" fill="white"/></svg></button>
+      <button class="share-btn share-btn-mail" onclick="shareMail()" title="Deel via e-mail"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="20" height="16" rx="2" stroke="var(--text2)" stroke-width="1.8" fill="none"/><path d="M2 8l10 6 10-6" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: VERDICT (was opdracht uitgevoerd?)
+═══════════════════════════════════════════════ -->
+<div id="screen-verdict" class="screen" style="justify-content:center;align-items:center;padding:40px 20px;">
+  <div style="max-width:400px;width:100%;text-align:center;">
+    <div class="label mb8" id="verdict-eyebrow">Jij bent de uitdager</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:2px;margin-bottom:8px;" id="verdict-title">Heeft hij het gedaan?</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:8px;" id="verdict-name-line"></div>
+
+    <div class="card mb24" style="text-align:left;padding:14px 16px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;" id="verdict-opdracht-label">De opdracht</div>
+      <div style="font-size:16px;font-weight:600;" id="verdict-opdracht-text"></div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:24px;">
+      <button class="verdict-btn yes" onclick="submitVerdict(true)">
+        <div class="verdict-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="22" stroke="#4CAF50" stroke-width="2.5"/>
+            <path d="M13 24.5L20.5 32L35 17" stroke="#4CAF50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="verdict-label" id="verdict-yes-label">JA, GEDAAN!</div>
+      </button>
+      <button class="verdict-btn no" onclick="submitVerdict(false)">
+        <div class="verdict-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="22" stroke="#E85555" stroke-width="2.5"/>
+            <path d="M16 16L32 32M32 16L16 32" stroke="#E85555" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="verdict-label" id="verdict-no-label">NEE, GEWEIGERD</div>
+      </button>
+    </div>
+
+    <button class="btn btn-outline" onclick="skipVerdict()" id="verdict-skip-btn" style="font-size:13px;font-weight:500;padding:10px;">Sla over (later invullen)</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let sb = null;
+let currentUser = null;
+let currentProfile = null;
+let currentGroup = null;
+let currentGame = null;
+let selectedOdds = 5;
+let selectedMode = 'manual';
+let isDemoMode = false;
+let currentLang = localStorage.getItem('wato_lang') || 'nl';
+
+// Demo data
+const demoGroups = [{ id:'demo1', name:'De Bende', invite_code:'DEMO01', created_by:'u1' }];
+const demoMembers = [
+  { user_id:'u1', profiles:{ username:'Tim', avatar_color:'av-yellow' }},
+  { user_id:'u2', profiles:{ username:'Joost', avatar_color:'av-blue' }},
+  { user_id:'u3', profiles:{ username:'Bas', avatar_color:'av-red' }},
+];
+const demoStats = [
+  { user_id:'u1', username:'Tim', avatar_color:'av-yellow', played:12, wins:5, losses:7, executed:4, refused:3 },
+  { user_id:'u2', username:'Joost', avatar_color:'av-blue', played:10, wins:6, losses:4, executed:2, refused:2 },
+  { user_id:'u3', username:'Bas', avatar_color:'av-red', played:8, wins:2, losses:6, executed:5, refused:1 },
+];
+
+// ═══════════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════════
+const T = {
+  nl: {
+    tagline: 'Het ultieme vriendenspel',
+    connect: '⚡ Supabase Koppelen',
+    connectSub: 'Vul je Supabase project gegevens in om de app te activeren. Heb je nog geen project? Maak er gratis één aan op supabase.com',
+    connectStep1: '<strong>1.</strong> Ga naar <strong>supabase.com</strong> → New Project',
+    connectStep2: '<strong>2.</strong> Kopieer je <code>Project URL</code> en <code>anon key</code> uit Settings → API',
+    connectStep3: '<strong>3.</strong> Voer in het SQL editor het schema in (zie README.sql)',
+    connectBtn: 'VERBINDEN',
+    demoBtn: 'DEMO MODUS (zonder database)',
+    supabaseUrl: 'Supabase Project URL',
+    supabaseKey: 'Supabase Anon Key',
+    login: 'INLOGGEN',
+    register: 'REGISTREREN',
+    email: 'E-mailadres',
+    password: 'Wachtwoord',
+    loginBtn: 'INLOGGEN',
+    username: 'Gebruikersnaam',
+    usernamePh: 'Bijv. TimDeBoer',
+    passwordHint: 'Min. 6 tekens',
+    avatarColor: 'Avatar kleur',
+    signupBtn: 'ACCOUNT AANMAKEN',
+    logout: 'Uitloggen',
+    myGroups: 'Mijn Groepen',
+    loading: 'Laden...',
+    createGroup: '🏆 Maak een nieuwe groep',
+    groupName: 'Groepsnaam',
+    groupNamePh: 'Bijv. De Bende, Kroegvrienden...',
+    createGroupBtn: 'GROEP AANMAKEN',
+    joinGroup: '🔗 Aansluiten bij groep',
+    inviteCode: 'Uitnodigingscode',
+    inviteCodePh: 'Bijv. ABC123',
+    joinBtn: 'AANSLUITEN',
+    noGroups: 'Je bent nog niet in een groep.<br>Maak er een aan of sluit je aan!',
+    inviteCodeLabel: 'Uitnodigingscode',
+    copyBtn: 'KOPIËREN',
+    tabLeaderboard: '🏆 STAND',
+    tabPlay: '🎮 SPELEN',
+    tabMembers: '👥 LEDEN',
+    rankingLabel: 'Ranglijst',
+    noGamesYet: 'Nog geen spellen gespeeld',
+    newChallenge: 'Nieuwe uitdaging',
+    opponent: 'Uitgedaagde',
+    opponentPh: 'Kies een tegenstander...',
+    inputMode: 'Invoermodus',
+    modeManualName: 'Zelf kiezen',
+    modeManualDesc: 'Anoniem je eigen getal invoeren',
+    modeRandomName: 'Willekeurig',
+    modeRandomDesc: 'De app bepaalt beide getallen',
+    challengeLabel: 'Opdracht',
+    challengePh: 'Bijv. drink je biertje in één keer op',
+    oddsLabel: 'Odds (1 op ...)',
+    startBtn: 'START UITDAGING 🔥',
+    membersLabel: 'Leden',
+    theChallenge: 'De uitdaging',
+    oddsIs: 'Odds: 1 op',
+    chooseNumber: 'Kies jouw getal (1 t/m',
+    numberHint: 'Niemand kan jouw getal zien totdat beide spelers klaar zijn',
+    lockBtn: 'GETAL VERGRENDELEN 🔒',
+    randomMode: 'Willekeurige modus',
+    randomDesc: 'De app kiest voor jullie allebei een getal',
+    randomBtn: 'GETALLEN BEPALEN 🎲',
+    waitingFor: 'Wachten op...',
+    backBtn: '← Terug',
+    challenger: 'uitdager',
+    waiting: 'Wachten...',
+    ready: '✓ Klaar',
+    result: 'De uitslag',
+    theAssignment: 'De opdracht',
+    backToGroup: '← TERUG',
+    newRound: 'NIEUWE RONDE',
+    must: 'MOET!',
+    safe: 'VEILIG!',
+    bothChose: 'Allebei',
+    oddsHit: '— de odds zijn uitgekomen!',
+    noMatch: '— geen match.',
+    played: 'gespeeld',
+    won: 'gewonnen',
+    lost: 'verloren',
+    you: 'JIJ',
+    grpCodeLabel: 'Uitnodigingscode',
+    inviteCodeInfo: 'Uitnodigingscode: ',
+    codeCopied: 'Code gekopieerd!',
+    connectedToast: 'Verbonden met Supabase!',
+    invalidCreds: 'Ongeldige gegevens',
+    fillBothFields: 'Vul beide velden in',
+    demoToast: 'Demo modus actief — geen database nodig',
+    accountCreated: 'Account aangemaakt!',
+    wrongCreds: 'Onjuiste gegevens',
+    fillAllFields: 'Vul alle velden in',
+    groupCreated: 'Groep aangemaakt! Code: ',
+    groupCreatedDemo: 'Groep aangemaakt!',
+    fillGroupName: 'Vul een groepsnaam in',
+    groupError: 'Fout: ',
+    groupMemberError: 'Groep aangemaakt maar kon je niet toevoegen als lid',
+    fillCode: 'Vul een code in',
+    codeNotFound: 'Code niet gevonden',
+    alreadyMember: 'Je bent al lid van deze groep',
+    welcomeGroup: 'Welkom bij ',
+    noOpponent: 'Kies een tegenstander',
+    fillChallenge: 'Vul een opdracht in',
+    gameError: 'Fout bij aanmaken game',
+    chooseValidNum: 'Kies een getal tussen 1 en ',
+    errLoadGroups: 'Fout bij laden van groepen',
+    hey: 'Hey, ',
+    avatarColors: ['🔴 Rood','🟠 Oranje','🟡 Goud','🟢 Groen','🩵 Teal','🔵 Blauw','🟣 Paars','🩷 Roze'],
+    whatAreOdds: 'WAT ZIJN DE ODDS?',
+    manualSub: 'Kies je getal',
+    randomSub: 'Willekeurige getallen',
+    inviteSectionLabel: 'Vriend uitnodigen',
+    inviteNameLabel: 'Naam vriend (optioneel)',
+    inviteOrCopyLabel: 'Of kopieer de uitnodigingslink',
+    inviteWaLabel: 'WhatsApp',
+    inviteEmailLabel: 'E-mail',
+    inviteLinkCopied: 'Link gekopieerd!',
+    waMessage: 'Hey {name}! Kom jij ook meedoen met What Are The Odds? Sluit je aan bij onze groep "{group}" via deze link: {link} — of gebruik code: {code}',
+    waMessageNoName: 'Hey! Kom jij ook meedoen met What Are The Odds? Sluit je aan bij onze groep "{group}" via deze link: {link} — of gebruik code: {code}',
+    emailSubject: 'Uitnodiging: What Are The Odds — {group}',
+    emailBody: 'Hey {name}!\n\nIk nodig je uit om mee te doen met What Are The Odds.\n\nSluit je aan bij onze groep "{group}" via:\n{link}\n\nOf open de app en gebruik uitnodigingscode: {code}\n\nTot snel!',
+    emailBodyNoName: 'Hey!\n\nIk nodig je uit om mee te doen met What Are The Odds.\n\nSluit je aan bij onze groep "{group}" via:\n{link}\n\nOf open de app en gebruik uitnodigingscode: {code}\n\nTot snel!',
+    verdictEyebrow: 'Jij bent de uitdager',
+    verdictTitle: 'Heeft hij het gedaan?',
+    verdictOpdracht: 'De opdracht',
+    verdictYes: 'JA, GEDAAN!',
+    verdictNo: 'NEE, GEWEIGERD',
+    verdictSkip: 'Sla over (later invullen)',
+    executed: 'uitgevoerd',
+    refused: 'geweigerd',
+  },
+  en: {
+    tagline: 'The ultimate friend game',
+    connect: '⚡ Connect Supabase',
+    connectSub: 'Enter your Supabase project details to activate the app. No project yet? Create one for free at supabase.com',
+    connectStep1: '<strong>1.</strong> Go to <strong>supabase.com</strong> → New Project',
+    connectStep2: '<strong>2.</strong> Copy your <code>Project URL</code> and <code>anon key</code> from Settings → API',
+    connectStep3: '<strong>3.</strong> Run the schema in the SQL editor (see README.sql)',
+    connectBtn: 'CONNECT',
+    demoBtn: 'DEMO MODE (no database)',
+    supabaseUrl: 'Supabase Project URL',
+    supabaseKey: 'Supabase Anon Key',
+    login: 'LOG IN',
+    register: 'REGISTER',
+    email: 'Email address',
+    password: 'Password',
+    loginBtn: 'LOG IN',
+    username: 'Username',
+    usernamePh: 'E.g. TimSmith',
+    passwordHint: 'Min. 6 characters',
+    avatarColor: 'Avatar color',
+    signupBtn: 'CREATE ACCOUNT',
+    logout: 'Log out',
+    myGroups: 'My Groups',
+    loading: 'Loading...',
+    createGroup: '🏆 Create a new group',
+    groupName: 'Group name',
+    groupNamePh: 'E.g. The Squad, Bar Friends...',
+    createGroupBtn: 'CREATE GROUP',
+    joinGroup: '🔗 Join a group',
+    inviteCode: 'Invite code',
+    inviteCodePh: 'E.g. ABC123',
+    joinBtn: 'JOIN',
+    noGroups: "You're not in a group yet.<br>Create one or join an existing one!",
+    inviteCodeLabel: 'Invite Code',
+    copyBtn: 'COPY',
+    tabLeaderboard: '🏆 STANDINGS',
+    tabPlay: '🎮 PLAY',
+    tabMembers: '👥 MEMBERS',
+    rankingLabel: 'Leaderboard',
+    noGamesYet: 'No games played yet',
+    newChallenge: 'New challenge',
+    opponent: 'Challenged',
+    opponentPh: 'Choose an opponent...',
+    inputMode: 'Input mode',
+    modeManualName: 'Pick yourself',
+    modeManualDesc: 'Anonymously enter your own number',
+    modeRandomName: 'Random',
+    modeRandomDesc: 'The app picks both numbers',
+    challengeLabel: 'Challenge',
+    challengePh: 'E.g. drink your beer in one go',
+    oddsLabel: 'Odds (1 in ...)',
+    startBtn: 'START CHALLENGE 🔥',
+    membersLabel: 'Members',
+    theChallenge: 'The challenge',
+    oddsIs: 'Odds: 1 in',
+    chooseNumber: 'Pick your number (1 to',
+    numberHint: 'Nobody can see your number until both players are ready',
+    lockBtn: 'LOCK IN NUMBER 🔒',
+    randomMode: 'Random mode',
+    randomDesc: 'The app picks a number for both of you',
+    randomBtn: 'GENERATE NUMBERS 🎲',
+    waitingFor: 'Waiting for...',
+    backBtn: '← Back',
+    challenger: 'challenger',
+    waiting: 'Waiting...',
+    ready: '✓ Ready',
+    result: 'The result',
+    theAssignment: 'The challenge',
+    backToGroup: '← BACK',
+    newRound: 'NEW ROUND',
+    must: 'HAS TO DO IT!',
+    safe: 'SAFE!',
+    bothChose: 'Both chose',
+    oddsHit: '— the odds came through!',
+    noMatch: '— no match.',
+    played: 'played',
+    won: 'won',
+    lost: 'lost',
+    you: 'YOU',
+    grpCodeLabel: 'Invite Code',
+    inviteCodeInfo: 'Invite code: ',
+    codeCopied: 'Code copied!',
+    connectedToast: 'Connected to Supabase!',
+    invalidCreds: 'Invalid credentials',
+    fillBothFields: 'Fill in both fields',
+    demoToast: 'Demo mode active — no database needed',
+    accountCreated: 'Account created!',
+    wrongCreds: 'Incorrect credentials',
+    fillAllFields: 'Fill in all fields',
+    groupCreated: 'Group created! Code: ',
+    groupCreatedDemo: 'Group created!',
+    fillGroupName: 'Enter a group name',
+    groupError: 'Error: ',
+    groupMemberError: 'Group created but could not add you as member',
+    fillCode: 'Enter a code',
+    codeNotFound: 'Code not found',
+    alreadyMember: 'You are already a member of this group',
+    welcomeGroup: 'Welcome to ',
+    noOpponent: 'Choose an opponent',
+    fillChallenge: 'Enter a challenge',
+    gameError: 'Error creating game',
+    chooseValidNum: 'Choose a number between 1 and ',
+    errLoadGroups: 'Error loading groups',
+    hey: 'Hey, ',
+    avatarColors: ['🔴 Red','🟠 Orange','🟡 Gold','🟢 Green','🩵 Teal','🔵 Blue','🟣 Purple','🩷 Pink'],
+    whatAreOdds: 'WHAT ARE THE ODDS?',
+    manualSub: 'Choose your number',
+    randomSub: 'Random numbers',
+    inviteSectionLabel: 'Invite a friend',
+    inviteNameLabel: 'Friend name (optional)',
+    inviteOrCopyLabel: 'Or copy the invite link',
+    inviteWaLabel: 'WhatsApp',
+    inviteEmailLabel: 'Email',
+    inviteLinkCopied: 'Link copied!',
+    waMessage: 'Hey {name}! Come join us for What Are The Odds! Join our group "{group}" here: {link} — or use code: {code}',
+    waMessageNoName: 'Hey! Come join us for What Are The Odds! Join our group "{group}" here: {link} — or use code: {code}',
+    emailSubject: 'Invite: What Are The Odds — {group}',
+    emailBody: 'Hey {name}!\n\nYou are invited to play What Are The Odds.\n\nJoin our group "{group}" here:\n{link}\n\nOr open the app and use invite code: {code}\n\nSee you soon!',
+    emailBodyNoName: 'Hey!\n\nYou are invited to play What Are The Odds.\n\nJoin our group "{group}" here:\n{link}\n\nOr open the app and use invite code: {code}\n\nSee you soon!',
+    verdictEyebrow: 'You are the challenger',
+    verdictTitle: 'Did they do it?',
+    verdictOpdracht: 'The challenge',
+    verdictYes: 'YES, DONE IT!',
+    verdictNo: 'NO, REFUSED',
+    verdictSkip: 'Skip (fill in later)',
+    executed: 'executed',
+    refused: 'refused',
+  },
+  es: {
+    tagline: 'El juego definitivo entre amigos',
+    connect: '⚡ Conectar Supabase',
+    connectSub: 'Ingresa los datos de tu proyecto Supabase para activar la app. ¿Sin proyecto? Crea uno gratis en supabase.com',
+    connectStep1: '<strong>1.</strong> Ve a <strong>supabase.com</strong> → Nuevo Proyecto',
+    connectStep2: '<strong>2.</strong> Copia tu <code>Project URL</code> y <code>anon key</code> en Settings → API',
+    connectStep3: '<strong>3.</strong> Ejecuta el schema en el editor SQL (ver README.sql)',
+    connectBtn: 'CONECTAR',
+    demoBtn: 'MODO DEMO (sin base de datos)',
+    supabaseUrl: 'URL del Proyecto Supabase',
+    supabaseKey: 'Clave Anon de Supabase',
+    login: 'INICIAR SESIÓN',
+    register: 'REGISTRARSE',
+    email: 'Correo electrónico',
+    password: 'Contraseña',
+    loginBtn: 'ENTRAR',
+    username: 'Nombre de usuario',
+    usernamePh: 'Ej. JuanGarcia',
+    passwordHint: 'Mín. 6 caracteres',
+    avatarColor: 'Color de avatar',
+    signupBtn: 'CREAR CUENTA',
+    logout: 'Cerrar sesión',
+    myGroups: 'Mis Grupos',
+    loading: 'Cargando...',
+    createGroup: '🏆 Crear un nuevo grupo',
+    groupName: 'Nombre del grupo',
+    groupNamePh: 'Ej. La Pandilla, Los Colegas...',
+    createGroupBtn: 'CREAR GRUPO',
+    joinGroup: '🔗 Unirse a un grupo',
+    inviteCode: 'Código de invitación',
+    inviteCodePh: 'Ej. ABC123',
+    joinBtn: 'UNIRSE',
+    noGroups: 'Aún no estás en ningún grupo.<br>¡Crea uno o únete a uno existente!',
+    inviteCodeLabel: 'Código de Invitación',
+    copyBtn: 'COPIAR',
+    tabLeaderboard: '🏆 TABLA',
+    tabPlay: '🎮 JUGAR',
+    tabMembers: '👥 MIEMBROS',
+    rankingLabel: 'Clasificación',
+    noGamesYet: 'Todavía no se han jugado partidas',
+    newChallenge: 'Nuevo reto',
+    opponent: 'Retado',
+    opponentPh: 'Elige un oponente...',
+    inputMode: 'Modo de entrada',
+    modeManualName: 'Elegir uno mismo',
+    modeManualDesc: 'Introduce tu número de forma anónima',
+    modeRandomName: 'Aleatorio',
+    modeRandomDesc: 'La app decide los números de ambos',
+    challengeLabel: 'Reto',
+    challengePh: 'Ej. bébete tu cerveza de un trago',
+    oddsLabel: 'Probabilidad (1 de ...)',
+    startBtn: 'INICIAR RETO 🔥',
+    membersLabel: 'Miembros',
+    theChallenge: 'El reto',
+    oddsIs: 'Prob: 1 de',
+    chooseNumber: 'Elige tu número (1 al',
+    numberHint: 'Nadie puede ver tu número hasta que ambos jugadores estén listos',
+    lockBtn: 'CONFIRMAR NÚMERO 🔒',
+    randomMode: 'Modo aleatorio',
+    randomDesc: 'La app elige un número para cada uno',
+    randomBtn: 'GENERAR NÚMEROS 🎲',
+    waitingFor: 'Esperando a...',
+    backBtn: '← Volver',
+    challenger: 'retador',
+    waiting: 'Esperando...',
+    ready: '✓ Listo',
+    result: 'El resultado',
+    theAssignment: 'El reto',
+    backToGroup: '← VOLVER',
+    newRound: 'NUEVA RONDA',
+    must: '¡TIENE QUE HACERLO!',
+    safe: '¡SALVADO!',
+    bothChose: 'Ambos eligieron',
+    oddsHit: '— ¡las probabilidades se cumplieron!',
+    noMatch: '— sin coincidencia.',
+    played: 'jugadas',
+    won: 'ganadas',
+    lost: 'perdidas',
+    you: 'TÚ',
+    grpCodeLabel: 'Código de Invitación',
+    inviteCodeInfo: 'Código de invitación: ',
+    codeCopied: '¡Código copiado!',
+    connectedToast: '¡Conectado a Supabase!',
+    invalidCreds: 'Datos inválidos',
+    fillBothFields: 'Rellena ambos campos',
+    demoToast: 'Modo demo activo — sin base de datos necesaria',
+    accountCreated: '¡Cuenta creada!',
+    wrongCreds: 'Credenciales incorrectas',
+    fillAllFields: 'Rellena todos los campos',
+    groupCreated: '¡Grupo creado! Código: ',
+    groupCreatedDemo: '¡Grupo creado!',
+    fillGroupName: 'Introduce un nombre de grupo',
+    groupError: 'Error: ',
+    groupMemberError: 'Grupo creado pero no se pudo añadirte como miembro',
+    fillCode: 'Introduce un código',
+    codeNotFound: 'Código no encontrado',
+    alreadyMember: 'Ya eres miembro de este grupo',
+    welcomeGroup: 'Bienvenido a ',
+    noOpponent: 'Elige un oponente',
+    fillChallenge: 'Introduce un reto',
+    gameError: 'Error al crear la partida',
+    chooseValidNum: 'Elige un número entre 1 y ',
+    errLoadGroups: 'Error al cargar grupos',
+    hey: '¡Hola, ',
+    avatarColors: ['🔴 Rojo','🟠 Naranja','🟡 Dorado','🟢 Verde','🩵 Teal','🔵 Azul','🟣 Morado','🩷 Rosa'],
+    whatAreOdds: '¿CUÁLES SON LAS PROBABILIDADES?',
+    manualSub: 'Elige tu número',
+    randomSub: 'Números aleatorios',
+    inviteSectionLabel: 'Invitar a un amigo',
+    inviteNameLabel: 'Nombre del amigo (opcional)',
+    inviteOrCopyLabel: 'O copia el enlace de invitacion',
+    inviteWaLabel: 'WhatsApp',
+    inviteEmailLabel: 'Correo',
+    inviteLinkCopied: '¡Enlace copiado!',
+    waMessage: '¡Hola {name}! ¿Te apuntas a What Are The Odds? Unite a nuestro grupo "{group}" aqui: {link} — o usa el codigo: {code}',
+    waMessageNoName: '¡Hola! ¿Te apuntas a What Are The Odds? Unite a nuestro grupo "{group}" aqui: {link} — o usa el codigo: {code}',
+    emailSubject: 'Invitacion: What Are The Odds — {group}',
+    emailBody: '¡Hola {name}!\n\nTe invito a jugar What Are The Odds.\n\nUnete a nuestro grupo "{group}" aqui:\n{link}\n\nO abre la app y usa el codigo: {code}\n\n¡Hasta pronto!',
+    emailBodyNoName: '¡Hola!\n\nTe invito a jugar What Are The Odds.\n\nUnete a nuestro grupo "{group}" aqui:\n{link}\n\nO abre la app y usa el codigo: {code}\n\n¡Hasta pronto!',
+    verdictEyebrow: 'Tu eres el retador',
+    verdictTitle: '¿Lo hizo?',
+    verdictOpdracht: 'El reto',
+    verdictYes: '¡SI, LO HIZO!',
+    verdictNo: 'NO, SE NEGO',
+    verdictSkip: 'Saltar (rellenar despues)',
+    executed: 'ejecutadas',
+    refused: 'rechazadas',
+  }
+};
+
+const OPDRACHTEN_ALL = {
+  nl: [
+    'drink je biertje in één keer op',
+    'bel iemand uit je contacten en zing een liedje',
+    'vraag iemand aan een vreemde tafel om hun naam',
+    'doe 20 push-ups hier op de grond',
+    'vertel iets gênants over jezelf',
+    'sprint één rondje om het terras',
+    'stuur een random contact een hartje zonder uitleg',
+    'vraag de ober om een high five',
+    'drink de rest van de avond met je niet-dominante hand',
+    'ga staan en maak een buiging naar de groep',
+    'gooi steen-papier-schaar met een vreemde',
+    'laat iemand anders je profielfoto kiezen',
+    'bestel de volgende ronde voor iedereen',
+    'zeg voor het volgende uur geen schuttingwoorden',
+    'wissel van stoel met de persoon naast je',
+  ],
+  en: [
+    'drink your beer in one go',
+    'call someone from your contacts and sing a song',
+    'ask someone at a random table for their name',
+    'do 20 push-ups right here on the floor',
+    'tell the group something embarrassing about yourself',
+    'sprint one lap around the terrace',
+    'send a random contact a heart emoji with no explanation',
+    'ask the waiter for a high five',
+    'drink with your non-dominant hand for the rest of the night',
+    'stand up and bow to the group',
+    'play rock-paper-scissors with a stranger',
+    'let someone else choose your profile photo',
+    'buy the next round for everyone',
+    'go one hour without swearing',
+    'swap seats with the person next to you',
+  ],
+  es: [
+    'beberte tu cerveza de un trago',
+    'llamar a alguien de tus contactos y cantarle una canción',
+    'pedirle el nombre a alguien de otra mesa',
+    'hacer 20 flexiones aquí en el suelo',
+    'contarle al grupo algo vergonzoso de ti mismo',
+    'correr una vuelta alrededor de la terraza',
+    'enviar un corazón a un contacto aleatorio sin explicación',
+    'pedirle un choca esos cinco al camarero',
+    'beber con tu mano no dominante el resto de la noche',
+    'levantarte y hacer una reverencia al grupo',
+    'jugar piedra-papel-tijera con un desconocido',
+    'dejar que alguien elija tu foto de perfil',
+    'pagar la siguiente ronda para todos',
+    'pasar una hora sin decir palabrotas',
+    'cambiar de sitio con la persona de al lado',
+  ],
+};
+
+function t(key) { return (T[currentLang] || T.nl)[key] || T.nl[key] || key; }
+function opdrachten() { return OPDRACHTEN_ALL[currentLang] || OPDRACHTEN_ALL.nl; }
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('wato_lang', lang);
+  applyTranslations();
+  updateLangButtons();
+}
+
+function updateLangButtons() {
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+  });
+}
+
+function applyTranslations() {
+  // Config modal
+  safeSet('cfg-title', t('connect'));
+  safeSet('cfg-sub', t('connectSub'), true);
+  safeSet('cfg-step1', t('connectStep1'), true);
+  safeSet('cfg-step2', t('connectStep2'), true);
+  safeSet('cfg-step3', t('connectStep3'), true);
+  safeSet('cfg-connect-btn', t('connectBtn'));
+  safeSet('cfg-demo-btn', t('demoBtn'));
+  safeAttr('cfg-url', 'placeholder', 'https://xxxxxxxxxxxx.supabase.co');
+  safeAttr('cfg-key', 'placeholder', 'eyJhbGciOiJIUzI1NiIsInR5cCI6...');
+  safeSet('cfg-url-label', t('supabaseUrl'));
+  safeSet('cfg-key-label', t('supabaseKey'));
+
+  // Auth screen
+  safeSet('auth-tagline', t('tagline'));
+  safeSet('auth-tab-login', t('login'));
+  safeSet('auth-tab-signup', t('register'));
+  safeSet('auth-email-label', t('email'));
+  safeAttr('login-email', 'placeholder', 'you@example.com');
+  safeSet('auth-pass-label', t('password'));
+  safeSet('auth-login-btn', t('loginBtn'));
+  safeSet('signup-username-label', t('username'));
+  safeAttr('signup-username', 'placeholder', t('usernamePh'));
+  safeSet('signup-email-label', t('email'));
+  safeAttr('signup-email', 'placeholder', 'you@example.com');
+  safeSet('signup-pass-label', t('password'));
+  safeAttr('signup-pass', 'placeholder', t('passwordHint'));
+  safeSet('signup-color-label', t('avatarColor'));
+  safeSet('signup-btn', t('signupBtn'));
+  // Update avatar color options
+  const sel = document.getElementById('signup-color');
+  if (sel) {
+    const colors = t('avatarColors');
+    const vals = ['av-red','av-orange','av-yellow','av-green','av-teal','av-blue','av-purple','av-pink'];
+    const cur = sel.value;
+    sel.innerHTML = vals.map((v,i)=>`<option value="${v}">${colors[i]}</option>`).join('');
+    sel.value = cur;
+  }
+
+  // Home screen
+  safeSet('hdr-logout', t('logout'));
+  safeSet('home-groups-label', t('myGroups'));
+  if (currentProfile) safeSet('home-greeting', t('hey') + currentProfile.username + (currentLang==='es'?'!':'!'));
+  safeSet('home-create-title', t('createGroup'));
+  safeSet('home-group-name-label', t('groupName'));
+  safeAttr('new-group-name', 'placeholder', t('groupNamePh'));
+  safeSet('home-create-btn', t('createGroupBtn'));
+  safeSet('home-join-title', t('joinGroup'));
+  safeSet('home-invite-label', t('inviteCode'));
+  safeAttr('join-code', 'placeholder', t('inviteCodePh'));
+  safeSet('home-join-btn', t('joinBtn'));
+
+  // Group screen
+  safeSet('grp-invite-label', t('inviteCodeLabel'));
+  safeSet('grp-copy-btn', t('copyBtn'));
+  safeSet('grp-tab-lb-btn', t('tabLeaderboard'));
+  safeSet('grp-tab-play-btn', t('tabPlay'));
+  safeSet('grp-tab-mem-btn', t('tabMembers'));
+  safeSet('grp-ranking-label', t('rankingLabel'));
+  safeSet('grp-new-challenge-label', t('newChallenge'));
+  safeSet('grp-opponent-title', t('opponent'));
+  safeAttr('play-opponent', 'data-placeholder', t('opponentPh'));
+  const firstOpt = document.querySelector('#play-opponent option:first-child');
+  if (firstOpt) firstOpt.textContent = t('opponentPh');
+  safeSet('grp-mode-title', t('inputMode'));
+  safeSet('mode-manual-name', t('modeManualName'));
+  safeSet('mode-manual-desc', t('modeManualDesc'));
+  safeSet('mode-random-name', t('modeRandomName'));
+  safeSet('mode-random-desc', t('modeRandomDesc'));
+  safeSet('grp-challenge-title', t('challengeLabel'));
+  safeAttr('play-opdracht', 'placeholder', t('challengePh'));
+  safeSet('grp-odds-title', t('oddsLabel'));
+  safeSet('grp-start-btn', t('startBtn'));
+  safeSet('grp-members-label', t('membersLabel'));
+
+  // Waiting screen
+  safeSet('wait-challenge-label', t('theChallenge'));
+  safeSet('wait-odds-label', t('oddsIs'));
+  safeSet('wait-choose-label', t('chooseNumber'));
+  safeSet('wait-number-hint', t('numberHint'));
+  safeSet('wait-lock-btn', t('lockBtn'));
+  safeSet('wait-random-title', t('randomMode'));
+  safeSet('wait-random-desc', t('randomDesc'));
+  safeSet('wait-random-btn', t('randomBtn'));
+  safeSet('wait-waiting-label', t('waitingFor'));
+  safeSet('wait-back-btn', t('backBtn'));
+
+  // Reveal screen
+  safeSet('reveal-result-label', t('result'));
+
+  // Invite section
+  safeSet('invite-section-label', t('inviteSectionLabel'));
+  safeSet('invite-name-label', t('inviteNameLabel'));
+  safeSet('invite-or-copy-label', t('inviteOrCopyLabel'));
+  safeSet('invite-wa-label', t('inviteWaLabel'));
+  safeSet('invite-email-label', t('inviteEmailLabel'));
+  safeAttr('invite-friend-name', 'placeholder', 'Bijv. Joost');
+
+
+  // Members / invite section
+  safeSet('invite-section-label', t('inviteSectionLabel'));
+  safeSet('invite-desc', t('inviteDesc'));
+  safeSet('invite-link-label', t('inviteLinkLabel'));
+  safeSet('invite-link-copy-btn', t('inviteLinkCopyBtn'));
+  safeSet('invite-wa-btn', t('inviteWaBtn'));
+  safeSet('invite-email-btn', t('inviteEmailBtn'));
+  // Verdict screen
+  safeSet('verdict-eyebrow', t('verdictEyebrow'));
+  safeSet('verdict-title', t('verdictTitle'));
+  safeSet('verdict-opdracht-label', t('verdictOpdracht'));
+  safeSet('verdict-yes-label', t('verdictYes'));
+  safeSet('verdict-no-label', t('verdictNo'));
+  safeSet('verdict-skip-btn', t('verdictSkip'));
+
+  safeSet('reveal-back-btn', t('backToGroup'));
+  safeSet('reveal-again-btn', t('newRound'));
+}
+
+function safeSet(id, val, isHTML=false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (isHTML) el.innerHTML = val; else el.textContent = val;
+}
+function safeAttr(id, attr, val) {
+  const el = document.getElementById(id);
+  if (el) el[attr] = val;
+}
+
+// ═══════════════════════════════════════
+// SUPABASE INIT
+// ═══════════════════════════════════════
+function initSupabase() {
+  const url = document.getElementById('cfg-url').value.trim();
+  const key = document.getElementById('cfg-key').value.trim();
+  if (!url || !key) { toast(t('fillBothFields'), true); return; }
+  try {
+    sb = supabase.createClient(url, key);
+    document.getElementById('config-modal').classList.remove('open');
+    checkSession();
+    toast(t('connectedToast'));
+  } catch(e) {
+    toast(t('invalidCreds'), true);
+  }
+}
+
+function demoMode() {
+  isDemoMode = true;
+  document.getElementById('config-modal').classList.remove('open');
+  currentUser = { id: 'u1' };
+  currentProfile = { username: 'Tim', avatar_color: 'av-yellow' };
+  setupHomeHeader();
+  showScreen('home');
+  loadGroups();
+  applyTranslations();
+  toast(t('demoToast'));
+}
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+async function checkSession() {
+  if (isDemoMode) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadProfile();
+    showScreen('home');
+    loadGroups();
+  } else {
+    showScreen('auth');
+  }
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  currentProfile = data;
+}
+
+async function doSignup() {
+  const username = document.getElementById('signup-username').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass = document.getElementById('signup-pass').value;
+  const color = document.getElementById('signup-color').value;
+  if (!username || !email || !pass) { toast(t('fillAllFields'), true); return; }
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  if (error) { toast(error.message, true); return; }
+  await sb.from('profiles').insert({ id: data.user.id, username, avatar_color: color });
+  currentUser = data.user;
+  currentProfile = { username, avatar_color: color };
+  setupHomeHeader();
+  showScreen('home');
+  loadGroups();
+  applyTranslations();
+  toast(t('accountCreated'));
+  checkPendingJoin();
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { toast(t('wrongCreds'), true); return; }
+  currentUser = data.user;
+  await loadProfile();
+  setupHomeHeader();
+  showScreen('home');
+  loadGroups();
+  applyTranslations();
+  checkPendingJoin();
+}
+
+async function doLogout() {
+  if (!isDemoMode) await sb.auth.signOut();
+  currentUser = null; currentProfile = null; currentGroup = null;
+  showScreen('auth');
+}
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.tabs .tab').forEach((t,i)=>t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='signup'&&i===1)));
+  document.getElementById('auth-login').style.display = tab==='login'?'block':'none';
+  document.getElementById('auth-signup').style.display = tab==='signup'?'block':'none';
+}
+
+// ═══════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════
+function setupHomeHeader() {
+  if (!currentProfile) return;
+  document.getElementById('hdr-username').textContent = currentProfile.username;
+  const av = document.getElementById('hdr-avatar');
+  av.className = 'avatar-sm ' + currentProfile.avatar_color;
+  av.textContent = currentProfile.username.charAt(0).toUpperCase();
+  document.getElementById('home-greeting').textContent = t('hey') + currentProfile.username + '!';
+}
+
+async function loadGroups() {
+  const el = document.getElementById('groups-list');
+  if (isDemoMode) {
+    el.innerHTML = demoGroups.map(g => groupCardHTML(g, 3)).join('');
+    return;
+  }
+  const { data, error } = await sb.from('group_members').select('groups(*)').eq('user_id', currentUser.id);
+  if (error) { console.error('loadGroups error:', error); el.innerHTML=`<div class="empty-state"><div>${t('errLoadGroups')}</div></div>`; return; }
+  if (!data || !data.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">👥</div><div>${t('noGroups')}</div></div>`;
+    return;
+  }
+  el.innerHTML = data.filter(r => r.groups).map(r => groupCardHTML(r.groups, 0)).join('');
+}
+
+function groupCardHTML(g, memberCount) {
+  return `<div class="group-card" onclick="openGroup('${g.id}','${g.name}','${g.invite_code}')">
+    <div class="group-card-left">
+      <div class="group-icon">🍺</div>
+      <div>
+        <div class="group-name">${g.name}</div>
+        <div class="group-meta">Code: ${g.invite_code}</div>
+      </div>
+    </div>
+    <div class="group-arrow">›</div>
+  </div>`;
+}
+
+async function createGroup() {
+  const name = document.getElementById('new-group-name').value.trim();
+  if (!name) { toast(t('fillGroupName'), true); return; }
+  const invite_code = Math.random().toString(36).substring(2,8).toUpperCase();
+  if (isDemoMode) {
+    demoGroups.push({ id: 'g'+Date.now(), name, invite_code, created_by: 'u1' });
+    document.getElementById('new-group-name').value = '';
+    loadGroups(); toast(t('groupCreatedDemo')); return;
+  }
+  const { data, error } = await sb.from('groups').insert({ name, invite_code, created_by: currentUser.id }).select().single();
+  if (error) { toast(t('groupError') + (error.message || 'Probeer opnieuw'), true); console.error('createGroup error:', error); return; }
+  const { error: memberError } = await sb.from('group_members').insert({ group_id: data.id, user_id: currentUser.id });
+  if (memberError) { toast(t('groupMemberError'), true); console.error('group_members error:', memberError); return; }
+  document.getElementById('new-group-name').value = '';
+  loadGroups(); toast(t('groupCreated') + invite_code);
+}
+
+async function joinGroup() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!code) { toast(t('fillCode'), true); return; }
+  if (isDemoMode) { toast(t('groupCreatedDemo')); document.getElementById('join-code').value=''; return; }
+  const { data: grp } = await sb.from('groups').select('*').eq('invite_code', code).single();
+  if (!grp) { toast(t('codeNotFound'), true); return; }
+  const { error } = await sb.from('group_members').insert({ group_id: grp.id, user_id: currentUser.id });
+  if (error && error.code === '23505') { toast(t('alreadyMember'), true); return; }
+  document.getElementById('join-code').value = '';
+  loadGroups(); toast(t('welcomeGroup') + grp.name + '!');
+}
+
+// ═══════════════════════════════════════
+// GROUP DETAIL
+// ═══════════════════════════════════════
+async function openGroup(id, name, invite_code) {
+  currentGroup = { id, name, invite_code };
+  document.getElementById('grp-title').textContent = name;
+  document.getElementById('grp-meta').textContent = t('inviteCodeInfo') + invite_code;
+  document.getElementById('grp-invite-code').textContent = invite_code;
+  showScreen('group');
+  switchGroupTab('leaderboard');
+  loadLeaderboard();
+  loadMembers();
+  updateInviteLinkDisplay();
+}
+
+function switchGroupTab(tab) {
+  ['leaderboard','play','members'].forEach(t => {
+    document.getElementById('grp-tab-'+t).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('#screen-group .tabs .tab').forEach((el,i) => {
+    el.classList.toggle('active', i===['leaderboard','play','members'].indexOf(tab));
+  });
+  if (tab === 'play') loadMembersForPlay();
+  if (tab === 'members') { loadMembers(); updateInviteLinkDisplay(); }
+}
+
+async function loadLeaderboard() {
+  const el = document.getElementById('leaderboard-list');
+  el.innerHTML = '<div class="empty-state"><div class="loader"></div></div>';
+
+  let stats;
+  if (isDemoMode) {
+    stats = demoStats;
+  } else {
+    const { data: members } = await sb.from('group_members').select('user_id, profiles(username, avatar_color)').eq('group_id', currentGroup.id);
+    if (!members) { el.innerHTML=''; return; }
+    const ids = members.map(m=>m.user_id);
+    const { data: games } = await sb.from('games').select('*').eq('group_id', currentGroup.id).in('challenger_id', ids);
+    stats = members.map(m => {
+      const uid = m.user_id;
+      const myGames = (games||[]).filter(g=>g.challenger_id===uid||g.challenged_id===uid);
+      const wins = myGames.filter(g=>g.winner_id===uid).length;
+      const losses = myGames.filter(g=>g.loser_id===uid).length;
+      const executed = myGames.filter(g=>g.loser_id===uid && g.opdracht_uitgevoerd===true).length;
+      const refused = myGames.filter(g=>g.loser_id===uid && g.opdracht_uitgevoerd===false).length;
+      return { user_id:uid, username:m.profiles.username, avatar_color:m.profiles.avatar_color, played:myGames.length, wins, losses, executed, refused };
+    });
+  }
+
+  stats.sort((a,b)=>b.wins-a.wins);
+
+  if (!stats.length) {
+    el.innerHTML=`<div class="empty-state"><div class="icon">🏆</div><div>${t('noGamesYet')}</div></div>`;
+    return;
+  }
+
+  const rankClass = ['gold','silver','bronze'];
+  el.innerHTML = stats.map((s,i)=>{
+    const av = `<div class="avatar-sm ${s.avatar_color}" style="flex-shrink:0;">${s.username.charAt(0).toUpperCase()}</div>`;
+    const isMe = isDemoMode ? i===0 : s.user_id===currentUser.id;
+    return `<div class="lb-row" style="${isMe?'border-color:var(--gold);background:rgba(212,167,49,0.05)':''}">
+      <div class="lb-rank ${rankClass[i]||''}">${i+1}</div>
+      ${av}
+      <div class="lb-info">
+        <div class="lb-name">${s.username}${isMe?` <span class="badge badge-gold">${t('you')}</span>`:''}</div>
+        <div class="lb-stats">${s.played} ${t('played')} · ${s.wins} ${t('won')} · ${s.losses} ${t('lost')}</div>
+        <div class="lb-stats" style="margin-top:2px;"><span style="color:var(--green)">✅ ${s.executed||0} ${t('executed')}</span> · <span style="color:var(--red)">❌ ${s.refused||0} ${t('refused')}</span></div>
+      </div>
+      <div class="lb-wins">${s.wins}</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadMembers() {
+  let members;
+  if (isDemoMode) { members = demoMembers; }
+  else {
+    const { data } = await sb.from('group_members').select('user_id, profiles(username, avatar_color)').eq('group_id', currentGroup.id);
+    members = data||[];
+  }
+  document.getElementById('member-count').textContent = members.length;
+  updateInviteLinkPreview();
+  document.getElementById('members-list').innerHTML = members.map(m=>{
+    const isMe = isDemoMode ? m.user_id==='u1' : m.user_id===currentUser.id;
+    return `<div class="member-row">
+      <div class="avatar-sm ${m.profiles.avatar_color}">${m.profiles.username.charAt(0).toUpperCase()}</div>
+      <div class="member-name">${m.profiles.username}</div>
+      <div class="member-role">${isMe?t('you'):''}</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadMembersForPlay() {
+  let members;
+  if (isDemoMode) { members = demoMembers; }
+  else {
+    const { data } = await sb.from('group_members').select('user_id, profiles(username, avatar_color)').eq('group_id', currentGroup.id);
+    members = (data||[]).filter(m=>m.user_id!==currentUser.id);
+  }
+  const sel = document.getElementById('play-opponent');
+  sel.innerHTML = '<option value="">Kies een tegenstander...</option>' +
+    members.filter(m=> isDemoMode ? m.user_id!=='u1' : true).map(m=>`<option value="${m.user_id}">${m.profiles.username}</option>`).join('');
+}
+
+
+
+function buildMemberInviteText(name) {
+  const code = currentGroup ? currentGroup.invite_code : '';
+  const base = window.location.href.split('?')[0].split('#')[0];
+  const link = base + '?join=' + code;
+  return `Hey ${name}! Doe mee met ons WATO spel 🎲\nGroepscode: ${code}\nLink: ${link}`;
+}
+
+function shareMemberWhatsApp(name) {
+  const text = encodeURIComponent(buildMemberInviteText(name));
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
+function shareMemberMail(name) {
+  const text = buildMemberInviteText(name);
+  const subject = encodeURIComponent('Doe mee met What Are The Odds!');
+  const body = encodeURIComponent(text);
+  window.open('mailto:?subject=' + subject + '&body=' + body, '_blank');
+}
+
+function getInviteLink() {
+  const code = currentGroup.invite_code;
+  const base = window.location.href.split('?')[0].split('#')[0];
+  return base + '?join=' + code;
+}
+
+function buildMessage(template, name, group, link, code) {
+  return template
+    .replace('{name}', name).replace('{group}', group)
+    .replace('{link}', link).replace('{code}', code);
+}
+
+function shareWhatsApp() {
+  const name = document.getElementById('invite-friend-name').value.trim();
+  const group = currentGroup.name;
+  const link = getInviteLink();
+  const code = currentGroup.invite_code;
+  const tpl = name ? t('waMessage') : t('waMessageNoName');
+  const msg = buildMessage(tpl, name, group, link, code);
+  const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+function shareEmail() {
+  const name = document.getElementById('invite-friend-name').value.trim();
+  const group = currentGroup.name;
+  const link = getInviteLink();
+  const code = currentGroup.invite_code;
+  const subject = buildMessage(t('emailSubject'), name, group, link, code);
+  const bodyTpl = name ? t('emailBody') : t('emailBodyNoName');
+  const body = buildMessage(bodyTpl, name, group, link, code);
+  const url = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.location.href = url;
+}
+
+function copyInviteLink() {
+  const link = getInviteLink();
+  navigator.clipboard.writeText(link).then(() => toast(t('inviteLinkCopied')));
+}
+
+function updateInviteLinkDisplay() {
+  const el = document.getElementById('invite-link-display');
+  if (el && currentGroup) el.textContent = getInviteLink();
+}
+
+
+// ═══════════════════════════════════════
+// INVITE FUNCTIONS
+// ═══════════════════════════════════════
+
+function buildMemberInviteText(name) {
+  const code = currentGroup ? currentGroup.invite_code : '';
+  const base = window.location.href.split('?')[0].split('#')[0];
+  const link = base + '?join=' + code;
+  return `Hey ${name}! Doe mee met ons WATO spel 🎲\nGroepscode: ${code}\nLink: ${link}`;
+}
+
+function shareMemberWhatsApp(name) {
+  const text = encodeURIComponent(buildMemberInviteText(name));
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
+function shareMemberMail(name) {
+  const text = buildMemberInviteText(name);
+  const subject = encodeURIComponent('Doe mee met What Are The Odds!');
+  const body = encodeURIComponent(text);
+  window.open('mailto:?subject=' + subject + '&body=' + body, '_blank');
+}
+
+function getInviteLink() {
+  const base = window.location.href.split('?')[0];
+  return base + '?join=' + currentGroup.invite_code;
+}
+
+function updateInviteLinkPreview() {
+  const el = document.getElementById('invite-link-preview');
+  if (el) el.textContent = getInviteLink();
+}
+
+function copyInviteLink() {
+  const link = getInviteLink();
+  navigator.clipboard.writeText(link).then(() => toast(t('inviteLinkCopied')));
+}
+
+function inviteWhatsApp() {
+  const link = getInviteLink();
+  const msg = t('inviteWaMsg')
+    .replace('{name}', currentGroup.name)
+    .replace('{code}', currentGroup.invite_code)
+    + '\n' + link;
+  const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+function inviteEmail() {
+  const link = getInviteLink();
+  const subject = t('inviteEmailSubject').replace('{name}', currentGroup.name);
+  const body = t('inviteEmailBody')
+    .replace(/{name}/g, currentGroup.name)
+    .replace('{link}', link)
+    .replace('{code}', currentGroup.invite_code);
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+
+function copyInviteCode() {
+  navigator.clipboard.writeText(currentGroup.invite_code).then(()=>toast(t('codeCopied')));
+}
+
+// ═══════════════════════════════════════
+// PLAY SETUP
+// ═══════════════════════════════════════
+function selectMode(mode) {
+  selectedMode = mode;
+  document.getElementById('mode-manual').classList.toggle('active', mode==='manual');
+  document.getElementById('mode-random').classList.toggle('active', mode==='random');
+}
+
+function selectOdds(n, el) {
+  selectedOdds = n;
+  document.querySelectorAll('.odds-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function suggestOpdracht() {
+  const pool = opdrachten();
+  document.getElementById('play-opdracht').value = pool[Math.floor(Math.random()*pool.length)];
+}
+
+async function startChallenge() {
+  const opponentId = document.getElementById('play-opponent').value;
+  const opdracht = document.getElementById('play-opdracht').value.trim();
+  if (!opponentId) { toast('Kies een tegenstander', true); return; }
+  if (!opdracht) { toast('Vul een opdracht in', true); return; }
+
+  const game = {
+    group_id: currentGroup.id,
+    challenger_id: isDemoMode ? 'u1' : currentUser.id,
+    challenged_id: opponentId,
+    opdracht, odds: selectedOdds, mode: selectedMode,
+    challenger_num: null, challenged_num: null,
+    winner_id: null, loser_id: null,
+  };
+
+  if (isDemoMode) {
+    currentGame = { ...game, id: 'game_'+Date.now() };
+    showWaiting();
+  } else {
+    const { data, error } = await sb.from('games').insert(game).select().single();
+    if (error) { toast('Fout bij aanmaken game', true); return; }
+    currentGame = data;
+    showWaiting();
+  }
+}
+
+function showWaiting() {
+  const g = currentGame;
+  const isChallenger = isDemoMode ? true : g.challenger_id === currentUser.id;
+  const myName = currentProfile.username;
+
+  document.getElementById('wait-title').textContent = 'WAT ZIJN DE ODDS?';
+  document.getElementById('wait-sub').textContent = `1 op ${g.odds} — ${g.mode==='manual'?'Kies je getal':'Willekeurige getallen'}`;
+  document.getElementById('wait-opdracht').textContent = g.opdracht;
+  document.getElementById('wait-odds').textContent = g.odds;
+  document.getElementById('wait-max').textContent = g.odds;
+
+  const isManual = g.mode === 'manual';
+  document.getElementById('wait-manual-section').style.display = isManual?'block':'none';
+  document.getElementById('wait-random-section').style.display = isManual?'none':'block';
+  document.getElementById('wait-number').value = '';
+
+  // Status list (demo: challenger = Tim, challenged = other)
+  let members = isDemoMode ? demoMembers : [];
+  const challenger = isDemoMode ? demoMembers.find(m=>m.user_id===g.challenger_id) : null;
+  const challenged = isDemoMode ? demoMembers.find(m=>m.user_id===g.challenged_id) : null;
+  const cname = isDemoMode ? challenger?.profiles.username||'Uitdager' : 'Jij';
+  const oname = isDemoMode ? challenged?.profiles.username||'Tegenstander' : 'Tegenstander';
+
+  document.getElementById('wait-status-list').innerHTML = `
+    <div class="player-status">
+      <div class="status-left">
+        <div class="status-dot ${isChallenger?'':''}"></div>
+        <div class="status-name">${cname} (uitdager)</div>
+      </div>
+      <div class="status-ready" id="status-challenger">Wachten...</div>
+    </div>
+    <div class="player-status">
+      <div class="status-left">
+        <div class="status-dot"></div>
+        <div class="status-name">${oname}</div>
+      </div>
+      <div class="status-ready" id="status-challenged">Wachten...</div>
+    </div>`;
+
+  showScreen('waiting');
+}
+
+function submitNumber() {
+  const n = parseInt(document.getElementById('wait-number').value);
+  if (!n || n < 1 || n > currentGame.odds) {
+    toast(`Kies een getal tussen 1 en ${currentGame.odds}`, true); return;
+  }
+  processSubmit(n);
+}
+
+function submitRandom() {
+  const n1 = Math.floor(Math.random() * currentGame.odds) + 1;
+  const n2 = Math.floor(Math.random() * currentGame.odds) + 1;
+  currentGame.challenger_num = n1;
+  currentGame.challenged_num = n2;
+  showReveal();
+}
+
+async function processSubmit(num) {
+  const isChallenger = isDemoMode ? true : currentGame.challenger_id === currentUser.id;
+  const field = isChallenger ? 'challenger_num' : 'challenged_num';
+  const statusEl = document.getElementById(isChallenger ? 'status-challenger' : 'status-challenged');
+  statusEl.textContent = '✓ Klaar';
+  statusEl.className = 'status-ready done';
+
+  currentGame[field] = num;
+
+  if (isDemoMode) {
+    // Simulate opponent
+    setTimeout(()=>{
+      const otherField = isChallenger ? 'challenged_num' : 'challenger_num';
+      currentGame[otherField] = Math.floor(Math.random()*currentGame.odds)+1;
+      const otherEl = document.getElementById(isChallenger ? 'status-challenged' : 'status-challenger');
+      otherEl.textContent = '✓ Klaar';
+      otherEl.className = 'status-ready done';
+      setTimeout(showReveal, 500);
+    }, 1200);
+  } else {
+    await sb.from('games').update({ [field]: num }).eq('id', currentGame.id);
+    // Poll for other player
+    const poll = setInterval(async ()=>{
+      const { data } = await sb.from('games').select('*').eq('id', currentGame.id).single();
+      if (data.challenger_num && data.challenged_num) {
+        clearInterval(poll);
+        currentGame = data;
+        showReveal();
+      }
+    }, 2000);
+  }
+}
+
+// ═══════════════════════════════════════
+// REVEAL
+// ═══════════════════════════════════════
+async function showReveal() {
+  const g = currentGame;
+  const match = g.challenger_num === g.challenged_num;
+
+  let cName = 'Uitdager', oName = 'Uitgedaagde';
+  if (isDemoMode) {
+    cName = demoMembers.find(m=>m.user_id===g.challenger_id)?.profiles.username||'Uitdager';
+    oName = demoMembers.find(m=>m.user_id===g.challenged_id)?.profiles.username||'Uitgedaagde';
+  } else {
+    const { data: profiles } = await sb.from('profiles').select('id, username').in('id',[g.challenger_id, g.challenged_id]);
+    cName = profiles?.find(p=>p.id===g.challenger_id)?.username||'Uitdager';
+    oName = profiles?.find(p=>p.id===g.challenged_id)?.username||'Uitgedaagde';
+  }
+
+  const isMe = isDemoMode ? true : currentUser.id === g.challenger_id;
+  const myNum = isMe ? g.challenger_num : g.challenged_num;
+  const theirNum = isMe ? g.challenged_num : g.challenger_num;
+  const iLoose = match; // challenged loses when match
+
+  document.getElementById('rname-1').textContent = cName;
+  document.getElementById('rnum-1').textContent = g.challenger_num;
+  document.getElementById('rname-2').textContent = oName;
+  document.getElementById('rnum-2').textContent = g.challenged_num;
+
+  const banner = document.getElementById('reveal-banner');
+  banner.className = 'result-banner';
+
+  if (match) {
+    document.getElementById('rcard-1').className = 'reveal-card match';
+    document.getElementById('rcard-2').className = 'reveal-card match';
+    document.getElementById('rnum-1').className = 'reveal-card-num';
+    document.getElementById('rnum-2').className = 'reveal-card-num';
+    document.getElementById('reveal-emoji').textContent = '🔥';
+    document.getElementById('reveal-headline').textContent = oName.toUpperCase() + ' MOET!';
+    document.getElementById('reveal-sub').textContent = `Allebei ${g.challenger_num} — de odds zijn uitgekomen!`;
+    banner.classList.add('loss');
+    document.getElementById('reveal-opdracht-wrap').style.display = 'block';
+    document.getElementById('reveal-opdracht').textContent = g.opdracht;
+
+    if (!isDemoMode) {
+      await sb.from('games').update({ winner_id: g.challenger_id, loser_id: g.challenged_id }).eq('id', g.id);
+      // Update demo stats
+    } else {
+      // Update demo stats
+      const loser = demoStats.find(s=>s.user_id===g.challenged_id);
+      const winner = demoStats.find(s=>s.user_id===g.challenger_id);
+      if(loser){loser.losses++;loser.played++;}
+      if(winner){winner.wins++;winner.played++;}
+    }
+  } else {
+    document.getElementById('rcard-1').className = 'reveal-card';
+    document.getElementById('rcard-2').className = 'reveal-card';
+    document.getElementById('rnum-1').className = 'reveal-card-num miss';
+    document.getElementById('rnum-2').className = 'reveal-card-num miss';
+    document.getElementById('reveal-emoji').textContent = '😮‍💨';
+    document.getElementById('reveal-headline').textContent = 'VEILIG!';
+    document.getElementById('reveal-sub').textContent = `${cName} koos ${g.challenger_num}, ${oName} koos ${g.challenged_num} — geen match.`;
+    banner.classList.add('safe');
+    document.getElementById('reveal-opdracht-wrap').style.display = 'none';
+
+    if (isDemoMode) {
+      const both = [demoStats.find(s=>s.user_id===g.challenger_id), demoStats.find(s=>s.user_id===g.challenged_id)];
+      both.forEach(s=>{if(s)s.played++;});
+    } else {
+      await sb.from('games').update({ winner_id: null, loser_id: null }).eq('id', g.id);
+    }
+  }
+
+  showScreen('reveal');
+  // If match and current user is the challenger, show verdict button in reveal screen
+  if (match) {
+    const isChallenger = isDemoMode ? true : currentUser.id === g.challenger_id;
+    if (isChallenger) {
+      // Add verdict prompt below reveal
+      const wrap = document.getElementById('reveal-opdracht-wrap');
+      const existing = document.getElementById('verdict-prompt-inline');
+      if (existing) existing.remove();
+      const div = document.createElement('div');
+      div.id = 'verdict-prompt-inline';
+      div.style.cssText = 'margin-top:20px;';
+      div.innerHTML = '<button class="btn btn-gold" onclick="goToVerdict()" style="font-size:16px;">' + t('verdictTitle') + ' 👆</button>';
+      wrap.parentNode.insertBefore(div, wrap.nextSibling);
+    }
+  } else {
+    const existing = document.getElementById('verdict-prompt-inline');
+    if (existing) existing.remove();
+  }
+}
+
+
+function goToVerdict() {
+  const g = currentGame;
+  let oName = 'Uitgedaagde';
+  if (isDemoMode) {
+    oName = demoMembers.find(m=>m.user_id===g.challenged_id)?.profiles.username || 'Uitgedaagde';
+  }
+  document.getElementById('verdict-name-line').textContent = oName;
+  document.getElementById('verdict-opdracht-text').textContent = g.opdracht;
+  showScreen('verdict');
+}
+
+async function submitVerdict(executed) {
+  const g = currentGame;
+  if (isDemoMode) {
+    const loser = demoStats.find(s=>s.user_id===g.challenged_id);
+    if (loser) {
+      if (executed) loser.executed = (loser.executed||0) + 1;
+      else loser.refused = (loser.refused||0) + 1;
+    }
+    showVerdictResult(executed);
+    return;
+  }
+  await sb.from('games').update({ opdracht_uitgevoerd: executed }).eq('id', g.id);
+  showVerdictResult(executed);
+}
+
+function skipVerdict() {
+  playAgain();
+}
+
+function showVerdictResult(executed) {
+  const g = currentGame;
+  let oName = isDemoMode
+    ? demoMembers.find(m=>m.user_id===g.challenged_id)?.profiles.username || 'Uitgedaagde'
+    : 'Uitgedaagde';
+
+  const banner = document.getElementById('reveal-banner');
+  if (executed) {
+    document.getElementById('reveal-emoji').textContent = '✅';
+    document.getElementById('reveal-headline').textContent = oName.toUpperCase() + ' HEEFT HET GEDAAN!';
+    banner.className = 'result-banner win';
+  } else {
+    document.getElementById('reveal-emoji').textContent = '❌';
+    document.getElementById('reveal-headline').textContent = oName.toUpperCase() + ' HEEFT GEWEIGERD!';
+    banner.className = 'result-banner loss';
+  }
+  // Remove verdict prompt and go back to reveal
+  const existing = document.getElementById('verdict-prompt-inline');
+  if (existing) existing.remove();
+  showScreen('reveal');
+  loadLeaderboard();
+}
+
+
+function buildShareText() {
+  const g = currentGame;
+  if (!g) return '';
+  const match = g.challenger_num === g.challenged_num;
+  let cName = 'Uitdager', oName = 'Uitgedaagde';
+  if (isDemoMode) {
+    cName = demoMembers.find(m=>m.user_id===g.challenger_id)?.profiles.username || cName;
+    oName = demoMembers.find(m=>m.user_id===g.challenged_id)?.profiles.username || oName;
+  }
+  if (match) {
+    return `🔥 WHAT ARE THE ODDS!\n${oName} moest: "${g.opdracht}"\nAllebei kozen ${g.challenger_num} — de odds kwamen uit! (1 op ${g.odds})`;
+  } else {
+    return `😮‍💨 WHAT ARE THE ODDS\n${cName} (${g.challenger_num}) vs ${oName} (${g.challenged_num}) — geen match. Veilig! (1 op ${g.odds})`;
+  }
+}
+
+function shareWhatsApp() {
+  const text = encodeURIComponent(buildShareText());
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
+function shareMail() {
+  const text = buildShareText();
+  const subject = encodeURIComponent('What Are The Odds — Uitslag');
+  const body = encodeURIComponent(text);
+  window.open('mailto:?subject=' + subject + '&body=' + body, '_blank');
+}
+
+function playAgain() {
+  switchGroupTab('play');
+  showScreen('group');
+  loadLeaderboard();
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function toast(msg, isError=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = isError ? 'error show' : 'show';
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════
+// INIT ON LOAD
+// ═══════════════════════════════════════
+
+// Auto-join via invite link
+const urlParams = new URLSearchParams(window.location.search);
+const joinCodeFromUrl = urlParams.get('join');
+if (joinCodeFromUrl) {
+  // Store it, will be used after login
+  sessionStorage.setItem('pending_join', joinCodeFromUrl.toUpperCase());
+}
+
+async function checkPendingJoin() {
+  const code = sessionStorage.getItem('pending_join');
+  if (!code) return;
+  sessionStorage.removeItem('pending_join');
+  document.getElementById('join-code').value = code;
+  await joinGroup();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyTranslations();
+  updateLangButtons();
+
+  // Auto-join via invite link (?join=CODE)
+  const urlParams = new URLSearchParams(window.location.search);
+  const joinCode = urlParams.get('join');
+  if (joinCode) {
+    // Store it, will be used after login/signup
+    sessionStorage.setItem('wato_pending_join', joinCode.toUpperCase());
+  }
+});
+</script>
+</body>
+</html>
