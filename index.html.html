@@ -6,6 +6,7 @@
 <title>What Are The Odds</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <style>
   /* ─── RESET & BASE ─── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1480,10 +1481,12 @@ function applyTranslations() {
   safeSet('reveal-again-btn', t('newRound'));
 }
 
+function sanitize(str) { return DOMPurify.sanitize(str || ''); }
+
 function safeSet(id, val, isHTML=false) {
   const el = document.getElementById(id);
   if (!el) return;
-  if (isHTML) el.innerHTML = val; else el.textContent = val;
+  if (isHTML) el.innerHTML = sanitize(val); else el.textContent = val;
 }
 function safeAttr(id, attr, val) {
   const el = document.getElementById(id);
@@ -1547,7 +1550,7 @@ async function doSignup() {
   const color = document.getElementById('signup-color').value;
   if (!username || !email || !pass) { toast(t('fillAllFields'), true); return; }
   const { data, error } = await sb.auth.signUp({ email, password: pass });
-  if (error) { toast(error.message, true); return; }
+  if (error) { toast(t('fillAllFields'), true); return; }
   await sb.from('profiles').insert({ id: data.user.id, username, avatar_color: color });
   currentUser = data.user;
   currentProfile = { username, avatar_color: color };
@@ -1613,12 +1616,14 @@ async function loadGroups() {
 }
 
 function groupCardHTML(g, memberCount) {
-  return `<div class="group-card" onclick="openGroup('${g.id}','${g.name}','${g.invite_code}')">
+  const safeName = sanitize(g.name);
+  const safeCode = sanitize(g.invite_code);
+  return `<div class="group-card" data-gid="${g.id}" data-gname="${safeName.replace(/"/g,'&quot;')}" data-gcode="${safeCode}" onclick="openGroupFromCard(this)">
     <div class="group-card-left">
       <div class="group-icon">🍺</div>
       <div>
-        <div class="group-name">${g.name}</div>
-        <div class="group-meta">Code: ${g.invite_code}</div>
+        <div class="group-name">${safeName}</div>
+        <div class="group-meta">Code: ${safeCode}</div>
       </div>
     </div>
     <div class="group-arrow">›</div>
@@ -1628,14 +1633,16 @@ function groupCardHTML(g, memberCount) {
 async function createGroup() {
   const name = document.getElementById('new-group-name').value.trim();
   if (!name) { toast(t('fillGroupName'), true); return; }
-  const invite_code = Math.random().toString(36).substring(2,8).toUpperCase();
+  const arr = new Uint8Array(4);
+  crypto.getRandomValues(arr);
+  const invite_code = Array.from(arr).map(b=>b.toString(36)).join('').substring(0,6).toUpperCase();
   if (isDemoMode) {
     demoGroups.push({ id: 'g'+Date.now(), name, invite_code, created_by: 'u1' });
     document.getElementById('new-group-name').value = '';
     loadGroups(); toast(t('groupCreatedDemo')); return;
   }
   const { data, error } = await sb.from('groups').insert({ name, invite_code, created_by: currentUser.id }).select().single();
-  if (error) { toast(t('groupError') + (error.message || 'Probeer opnieuw'), true); console.error('createGroup error:', error); return; }
+  if (error) { toast(t('groupError'), true); console.error('createGroup error:', error); return; }
   const { error: memberError } = await sb.from('group_members').insert({ group_id: data.id, user_id: currentUser.id });
   if (memberError) { toast(t('groupMemberError'), true); console.error('group_members error:', memberError); return; }
   document.getElementById('new-group-name').value = '';
@@ -1657,6 +1664,10 @@ async function joinGroup() {
 // ═══════════════════════════════════════
 // GROUP DETAIL
 // ═══════════════════════════════════════
+function openGroupFromCard(el) {
+  openGroup(el.dataset.gid, el.dataset.gname, el.dataset.gcode);
+}
+
 async function openGroup(id, name, invite_code) {
   currentGroup = { id, name, invite_code };
   document.getElementById('grp-title').textContent = name;
@@ -1712,13 +1723,14 @@ async function loadLeaderboard() {
 
   const rankClass = ['gold','silver','bronze'];
   el.innerHTML = stats.map((s,i)=>{
-    const av = `<div class="avatar-sm ${s.avatar_color}" style="flex-shrink:0;">${s.username.charAt(0).toUpperCase()}</div>`;
+    const safeUsername = sanitize(s.username);
+    const av = `<div class="avatar-sm ${s.avatar_color}" style="flex-shrink:0;">${safeUsername.charAt(0).toUpperCase()}</div>`;
     const isMe = isDemoMode ? i===0 : s.user_id===currentUser.id;
     return `<div class="lb-row" style="${isMe?'border-color:var(--gold);background:rgba(212,167,49,0.05)':''}">
       <div class="lb-rank ${rankClass[i]||''}">${i+1}</div>
       ${av}
       <div class="lb-info">
-        <div class="lb-name">${s.username}${isMe?` <span class="badge badge-gold">${t('you')}</span>`:''}</div>
+        <div class="lb-name">${safeUsername}${isMe?` <span class="badge badge-gold">${t('you')}</span>`:''}</div>
         <div class="lb-stats">${s.played} ${t('played')} · ${s.wins} ${t('won')} · ${s.losses} ${t('lost')}</div>
         <div class="lb-stats" style="margin-top:2px;"><span style="color:var(--green)">✅ ${s.executed||0} ${t('executed')}</span> · <span style="color:var(--red)">❌ ${s.refused||0} ${t('refused')}</span></div>
       </div>
@@ -1738,9 +1750,10 @@ async function loadMembers() {
   updateInviteLinkPreview();
   document.getElementById('members-list').innerHTML = members.map(m=>{
     const isMe = isDemoMode ? m.user_id==='u1' : m.user_id===currentUser.id;
+    const safeUsername = sanitize(m.profiles.username);
     return `<div class="member-row">
-      <div class="avatar-sm ${m.profiles.avatar_color}">${m.profiles.username.charAt(0).toUpperCase()}</div>
-      <div class="member-name">${m.profiles.username}</div>
+      <div class="avatar-sm ${m.profiles.avatar_color}">${safeUsername.charAt(0).toUpperCase()}</div>
+      <div class="member-name">${safeUsername}</div>
       <div class="member-role">${isMe?t('you'):''}</div>
     </div>`;
   }).join('');
@@ -1755,7 +1768,7 @@ async function loadMembersForPlay() {
   }
   const sel = document.getElementById('play-opponent');
   sel.innerHTML = '<option value="">Kies een tegenstander...</option>' +
-    members.filter(m=> isDemoMode ? m.user_id!=='u1' : true).map(m=>`<option value="${m.user_id}">${m.profiles.username}</option>`).join('');
+    members.filter(m=> isDemoMode ? m.user_id!=='u1' : true).map(m=>`<option value="${m.user_id}">${sanitize(m.profiles.username)}</option>`).join('');
 }
 
 
