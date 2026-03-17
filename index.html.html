@@ -932,6 +932,24 @@
   </div>
 </div>
 
+<!-- CHALLENGE NOTIFICATIE POPUP -->
+<div id="challenge-notif" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;justify-content:center;align-items:center;padding:24px;">
+  <div style="background:var(--surface);border-radius:16px;padding:28px 24px;max-width:360px;width:100%;text-align:center;">
+    <div style="font-size:36px;margin-bottom:8px;">🎲</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;margin-bottom:4px;">JE WORDT UITGEDAAGD!</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px;"><span id="challenge-notif-challenger" style="font-weight:700;color:var(--text1);"></span> daagt je uit</div>
+    <div class="card mb16" style="text-align:left;padding:14px 16px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;">Opdracht</div>
+      <div style="font-size:16px;font-weight:600;" id="challenge-notif-opdracht"></div>
+      <div style="font-size:13px;color:var(--text2);margin-top:6px;">1 op <span id="challenge-notif-odds"></span></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-outline" style="flex:1;" onclick="declineChallenge()">Weigeren</button>
+      <button class="btn btn-gold" style="flex:1;" onclick="acceptChallenge()">Meedoen 🔥</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════
 // STATE
@@ -941,6 +959,9 @@ let currentUser = null;
 let currentProfile = null;
 let currentGroup = null;
 let currentGame = null;
+let pendingChallenge = null;
+let challengeChannel = null;
+let gameChannel = null;
 let selectedOdds = 5;
 let selectedMode = 'manual';
 let isDemoMode = false;
@@ -1593,6 +1614,7 @@ async function checkSession() {
       showScreen('home');
       loadGroups();
       applyTranslations();
+      startChallengeListener();
     }
   } else {
     showScreen('auth');
@@ -1618,12 +1640,46 @@ async function completeOAuthProfile() {
   showScreen('home');
   loadGroups();
   applyTranslations();
+  startChallengeListener();
   toast('Welkom ' + username + '! 🎲');
 }
 
 async function loadProfile() {
   const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
   currentProfile = data;
+}
+
+function startChallengeListener() {
+  if (isDemoMode || !currentUser) return;
+  if (challengeChannel) sb.removeChannel(challengeChannel);
+  challengeChannel = sb.channel('incoming-challenges-' + currentUser.id)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'games',
+      filter: `challenged_id=eq.${currentUser.id}`
+    }, async (payload) => {
+      if (currentGame) return; // al bezig met een spel
+      const game = payload.new;
+      const { data: profile } = await sb.from('profiles').select('username').eq('id', game.challenger_id).single();
+      pendingChallenge = game;
+      document.getElementById('challenge-notif-challenger').textContent = DOMPurify.sanitize(profile?.username || 'Iemand');
+      document.getElementById('challenge-notif-opdracht').textContent = DOMPurify.sanitize(game.opdracht);
+      document.getElementById('challenge-notif-odds').textContent = game.odds;
+      document.getElementById('challenge-notif').style.display = 'flex';
+    })
+    .subscribe();
+}
+
+function acceptChallenge() {
+  document.getElementById('challenge-notif').style.display = 'none';
+  if (!pendingChallenge) return;
+  currentGame = pendingChallenge;
+  pendingChallenge = null;
+  showWaiting();
+}
+
+function declineChallenge() {
+  document.getElementById('challenge-notif').style.display = 'none';
+  pendingChallenge = null;
 }
 
 async function doSignup() {
@@ -2108,15 +2164,22 @@ async function processSubmit(num) {
     }, 1200);
   } else {
     await sb.from('games').update({ [field]: num }).eq('id', currentGame.id);
-    // Poll for other player
-    const poll = setInterval(async ()=>{
-      const { data } = await sb.from('games').select('*').eq('id', currentGame.id).single();
-      if (data.challenger_num && data.challenged_num) {
-        clearInterval(poll);
-        currentGame = data;
-        showReveal();
-      }
-    }, 2000);
+    // Realtime: wacht tot tegenstander ook zijn getal heeft ingevuld
+    if (gameChannel) sb.removeChannel(gameChannel);
+    gameChannel = sb.channel('game-' + currentGame.id)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'games',
+        filter: `id=eq.${currentGame.id}`
+      }, (payload) => {
+        const data = payload.new;
+        if (data.challenger_num && data.challenged_num) {
+          sb.removeChannel(gameChannel);
+          gameChannel = null;
+          currentGame = data;
+          showReveal();
+        }
+      })
+      .subscribe();
   }
 }
 
